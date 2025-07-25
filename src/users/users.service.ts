@@ -1,21 +1,25 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private jwtService: JwtService,
   ) {}
 
-  /**
-   * 사용자 생성을 담당하는 메소드 (회원가입)
-   */
-  async create(createUserDto: CreateUserDto) {
+  //회원가입
+  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
     const { email, password, nickname } = createUserDto;
 
     const existingUser = await this.usersRepository.findOneBy({ email });
@@ -30,30 +34,34 @@ export class UsersService {
       password: hashedPassword,
       nickname,
     });
-    
+
     const savedUser = await this.usersRepository.save(newUser);
 
+    // 보안을 위해 비밀번호를 제외하고 반환
     const { password: _, ...result } = savedUser;
     return result;
   }
 
-  /**
-   * 모든 사용자 목록을 조회하는 메소드
-   * (참고: 실제 서비스에서는 관리자만 사용하도록 권한 제어가 필요합니다)
-   */
-  async findAll() {
-    return this.usersRepository.find();
-  }
-
-  /**
-   * 이메일을 기준으로 특정 사용자 한 명을 조회하는 메소드
-   * (참고: 로그인 기능 구현 시 반드시 필요합니다)
-   */
-  async findOneByEmail(email: string): Promise<User | undefined> {
+  //로그인
+  async login(
+    email: string,
+    pass: string,
+  ): Promise<{ accessToken: string }> {
     const user = await this.usersRepository.findOneBy({ email });
     if (!user) {
-      throw new NotFoundException('해당 이메일의 사용자를 찾을 수 없습니다.');
+      throw new UnauthorizedException('존재하지 않는 이메일입니다.');
     }
-    return user;
+
+    const isMatch = await bcrypt.compare(pass, user.password);
+    if (!isMatch) {
+      throw new UnauthorizedException('비밀번호가 일치하지 않습니다.');
+    }
+
+    //JWT 페이로드 생성
+    const payload = { sub: user.id, email: user.email };
+
+    return {
+      accessToken: this.jwtService.sign(payload),
+    };
   }
 }
