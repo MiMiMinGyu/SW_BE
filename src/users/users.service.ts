@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,6 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -37,7 +39,6 @@ export class UsersService {
 
     const savedUser = await this.usersRepository.save(newUser);
 
-    // 보안을 위해 비밀번호를 제외하고 반환
     const { password: _, ...result } = savedUser;
     return result;
   }
@@ -57,11 +58,34 @@ export class UsersService {
       throw new UnauthorizedException('비밀번호가 일치하지 않습니다.');
     }
 
-    //JWT 페이로드 생성
     const payload = { sub: user.id, email: user.email };
 
     return {
       accessToken: this.jwtService.sign(payload),
     };
+  }
+
+  //사용자 정보 수정
+  async update(
+    id: number,
+    updateUserDto: UpdateUserDto,
+  ): Promise<Omit<User, 'password'>> {
+    const user = await this.usersRepository.findOneBy({ id });
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+    //닉네임 변경
+    if (updateUserDto.nickname) {
+      user.nickname = updateUserDto.nickname;
+    }
+    //비밀번호 변경
+    if (updateUserDto.password) {
+      user.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+
+    const updatedUser = await this.usersRepository.save(user);
+
+    const { password, ...result } = updatedUser;
+    return result;
   }
 }
