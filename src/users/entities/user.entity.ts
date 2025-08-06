@@ -1,4 +1,5 @@
 import { Log } from '../../logs/entities/log.entity';
+import { Crop } from '../../crops/entities/crop.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
 @Entity()
@@ -17,4 +18,7 @@ export class User {
 
   @OneToMany(() => Log, (log) => log.user)
   logs: Log[];
+
+  @OneToMany(() => Crop, (crop) => crop.user)
+  crops: Crop[];
 }
