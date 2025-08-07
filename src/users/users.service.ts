@@ -88,4 +88,15 @@ export class UsersService {
     const { password, ...result } = updatedUser;
     return result;
   }
+
+  async uploadProfileImage(userId: number, filePath: string): Promise<User> {
+    const user = await this.usersRepository.findOneBy({ id: userId });
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+
+    user.profileImage = filePath;
+
+    return this.usersRepository.save(user);
+  }
 }

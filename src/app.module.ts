@@ -2,11 +2,18 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
+import { MulterModule } from '@nestjs/platform-express';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { diskStorage } from 'multer';
+import { join } from 'path';
+import * as path from 'path';
+
 import { UsersModule } from './users/users.module';
 import { LogsModule } from './logs/logs.module';
+import { CropsModule } from './crops/crops.module';
+
 import { User } from './users/entities/user.entity';
 import { Log } from './logs/entities/log.entity';
-import { CropsModule } from './crops/crops.module';
 import { Crop } from './crops/entities/crop.entity';
 
 @Module({
@@ -34,6 +41,25 @@ import { Crop } from './crops/entities/crop.entity';
         signOptions: { expiresIn: '1h' },
       }),
       global: true,
+    }),
+    MulterModule.register({
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = path.extname(file.originalname);
+          const filename = `${path.basename(
+            file.originalname,
+            ext,
+          )}-${uniqueSuffix}${ext}`;
+          callback(null, filename);
+        },
+      }),
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
     }),
     UsersModule,
     LogsModule,

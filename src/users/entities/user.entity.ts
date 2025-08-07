@@ -16,6 +16,9 @@ export class User {
   @Column()
   nickname: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  profileImage: string;
+
   @OneToMany(() => Log, (log) => log.user)
   logs: Log[];
 
