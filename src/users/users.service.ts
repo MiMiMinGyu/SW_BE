@@ -22,7 +22,7 @@ export class UsersService {
 
   //회원가입
   async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
-    const { email, password, nickname } = createUserDto;
+    const { email, password } = createUserDto;
 
     const existingUser = await this.usersRepository.findOneBy({ email });
     if (existingUser) {
@@ -32,9 +32,8 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = this.usersRepository.create({
-      email,
+      ...createUserDto,
       password: hashedPassword,
-      nickname,
     });
 
     const savedUser = await this.usersRepository.save(newUser);
@@ -74,10 +73,12 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('사용자를 찾을 수 없습니다.');
     }
+
     //닉네임 변경
     if (updateUserDto.nickname) {
       user.nickname = updateUserDto.nickname;
     }
+
     //비밀번호 변경
     if (updateUserDto.password) {
       user.password = await bcrypt.hash(updateUserDto.password, 10);

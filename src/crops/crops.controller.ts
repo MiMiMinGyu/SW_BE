@@ -16,7 +16,7 @@ import { UpdateCropDto } from './dto/update-crop.dto';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('crops')
-@UseGuards(AuthGuard('jwt')) // 이 컨트롤러의 모든 API는 로그인이 필요합니다.
+@UseGuards(AuthGuard('jwt'))
 export class CropsController {
   constructor(private readonly cropsService: CropsService) {}
 

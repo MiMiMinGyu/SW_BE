@@ -1,6 +1,17 @@
 import { Log } from '../../logs/entities/log.entity';
 import { Crop } from '../../crops/entities/crop.entity';
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+} from 'typeorm';
+
+export enum UserType {
+  EXPERT = 'EXPERT',
+  HOBBY = 'HOBBY',
+}
 
 @Entity()
 export class User {
@@ -15,6 +26,16 @@ export class User {
 
   @Column()
   nickname: string;
+
+  @Column({
+    type: 'enum',
+    enum: UserType,
+    default: UserType.HOBBY,  //기본값 취미반
+  })
+  userType: UserType;
+
+  @CreateDateColumn()
+  createdAt: Date;
 
   @OneToMany(() => Log, (log) => log.user)
   logs: Log[];

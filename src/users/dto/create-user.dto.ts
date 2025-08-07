@@ -1,4 +1,5 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsEnum } from 'class-validator';
+import { UserType } from '../entities/user.entity'; // UserType enum 임포트 추가
 
 export class CreateUserDto {
   //이메일 형식인지
@@ -14,4 +15,7 @@ export class CreateUserDto {
   @IsString({ message: '닉네임은 문자열이어야 합니다.' })
   @MinLength(2, { message: '닉네임은 2자 이상이어야 합니다.' })
   nickname: string;
+
+  @IsEnum(UserType, { message: '유효한 사용자 유형(EXPERT 또는 HOBBY)을 선택해주세요.' })
+  userType: UserType;
 }
