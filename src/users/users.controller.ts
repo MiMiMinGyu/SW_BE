@@ -11,8 +11,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer'; // multer 임포트
-import * as path from 'path'; // path 임포트
+import { diskStorage } from 'multer';
+import * as path from 'path';
 
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -20,18 +20,18 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 
-@Controller('users')
+@Controller('users')  //이 파일에 모든 기본적인 주소 설정 코드
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   //회원가입
-  @Post()
+  @Post()   //기본적인 주소에 세부 경로
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
   //로그인
-  @Post('login')
+  @Post('login')    //login이라는 세부 경로
   login(@Body() loginUserDto: LoginUserDto) {
     return this.usersService.login(loginUserDto.email, loginUserDto.password);
   }
@@ -40,7 +40,6 @@ export class UsersController {
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
   getProfile(@Req() req) {
-    //비밀번호 제외하고 반환
     const { password, ...result } = req.user;
     return result;
   }
@@ -80,7 +79,7 @@ export class UsersController {
       throw new BadRequestException('이미지 파일이 없습니다.');
     }
 
-    console.log('Multer가 전달한 파일 정보:', file); // 최종 확인을 위해 로그는 남겨둡니다.
+    console.log('Multer가 전달한 파일 정보:', file);
 
     return this.usersService.uploadProfileImage(req.user.id, file.path);
   }

@@ -22,7 +22,7 @@ export class UsersService {
 
   //회원가입
   async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
-    const { email, password, nickname } = createUserDto;
+    const { email, password, nickname, userType } = createUserDto;
 
     const existingUser = await this.usersRepository.findOneBy({ email });
     if (existingUser) {
@@ -35,6 +35,7 @@ export class UsersService {
       email,
       password: hashedPassword,
       nickname,
+      userType,
     });
 
     const savedUser = await this.usersRepository.save(newUser);
@@ -74,11 +75,11 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('사용자를 찾을 수 없습니다.');
     }
-    //닉네임 변경
+    //닉네임 change
     if (updateUserDto.nickname) {
       user.nickname = updateUserDto.nickname;
     }
-    //비밀번호 변경
+    //비밀번호 change
     if (updateUserDto.password) {
       user.password = await bcrypt.hash(updateUserDto.password, 10);
     }
@@ -89,14 +90,20 @@ export class UsersService {
     return result;
   }
 
-  async uploadProfileImage(userId: number, filePath: string): Promise<User> {
+  //프로필 이미지
+  async uploadProfileImage(
+    userId: number,
+    filePath: string,
+  ): Promise<Omit<User, 'password'>> {
     const user = await this.usersRepository.findOneBy({ id: userId });
     if (!user) {
       throw new NotFoundException('사용자를 찾을 수 없습니다.');
     }
 
     user.profileImage = filePath;
-
-    return this.usersRepository.save(user);
+    const savedUser = await this.usersRepository.save(user);
+    //password 반환 X
+    const { password, ...result } = savedUser;
+    return result;
   }
 }
