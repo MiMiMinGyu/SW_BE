@@ -1,109 +1,386 @@
 import {
   Injectable,
   ConflictException,
-  UnauthorizedException,
   NotFoundException,
+  InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { CreateUserDto } from './dto/create-user.dto';
-import { User } from './entities/user.entity';
-import { JwtService } from '@nestjs/jwt';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ProfileUpdateDto } from './dto/profile-update.dto';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+  private readonly saltRounds = 10;
+
   constructor(
     @InjectRepository(User)
-    private usersRepository: Repository<User>,
-    private jwtService: JwtService,
+    private readonly usersRepository: Repository<User>,
   ) {}
 
-  //회원가입
-  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
-    const { email, password, nickname, userType } = createUserDto;
+  /**
+   * 비밀번호 해싱
+   */
+  private async hashPassword(password: string): Promise<string> {
+    try {
+      return await bcrypt.hash(password, this.saltRounds);
+    } catch (error) {
+      this.logger.error('Password hashing failed:', error);
+      throw new InternalServerErrorException(
+        '비밀번호 처리 중 오류가 발생했습니다.',
+      );
+    }
+  }
 
-    const existingUser = await this.usersRepository.findOneBy({ email });
-    if (existingUser) {
-      throw new ConflictException('이미 사용중인 이메일입니다.');
+  /**
+   * 비밀번호 제거 (타입 안전)
+   */
+  private toSafe(user: User): Omit<User, 'password'> {
+    const { password: _removed, ...safeUser } = user as User & {
+      password?: string;
+    };
+    return {
+      ...safeUser,
+      name: safeUser.name ?? null,
+      interestCrops: safeUser.interestCrops ?? null,
+      profileImage: safeUser.profileImage ?? null,
+    } as Omit<User, 'password'>;
+  }
+
+  /**
+   * 이전 프로필 이미지 삭제
+   */
+  private async deleteOldProfileImage(imagePath: string): Promise<void> {
+    if (
+      !imagePath ||
+      imagePath.startsWith('http') ||
+      imagePath === '/uploads/farmer_icon.png'
+    ) {
+      return; // URL이거나 기본 이미지인 경우 건너뛰기
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    try {
+      const fullPath = path.join(
+        process.cwd(),
+        imagePath.replace('/uploads/', 'uploads/'),
+      );
+      if (fs.existsSync(fullPath)) {
+        await fs.promises.unlink(fullPath);
+        this.logger.log(`이전 프로필 이미지 삭제됨: ${fullPath}`);
+      }
+    } catch (error) {
+      this.logger.warn(`이전 프로필 이미지 삭제 실패: ${imagePath}`, error);
+      // 파일 삭제 실패는 치명적이지 않으므로 에러를 던지지 않음
+    }
+  }
 
-    const newUser = this.usersRepository.create({
-      email,
-      password: hashedPassword,
-      nickname,
-      userType,
+  /**
+   * 회원 생성 (응답: safe)
+   */
+  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
+    const { email, password, nickname, userType, name, interestCrops } =
+      createUserDto;
+
+    // 이메일 중복 체크
+    const existingUser = await this.usersRepository.findOne({
+      where: { email: email.toLowerCase() }, // 이메일 소문자 변환
     });
 
-    const savedUser = await this.usersRepository.save(newUser);
+    if (existingUser) {
+      throw new ConflictException('이미 사용 중인 이메일입니다.');
+    }
 
-    const { password: _, ...result } = savedUser;
-    return result;
+    try {
+      const hashedPassword = await this.hashPassword(password);
+      const newUser = this.usersRepository.create({
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        nickname,
+        userType,
+        name: name && typeof name === 'string' ? name : null,
+        interestCrops:
+          interestCrops && typeof interestCrops === 'string'
+            ? interestCrops
+            : null,
+        profileImage: '/uploads/farmer_icon.png', // 기본 프로필 이미지 설정
+      });
+
+      const savedUser = await this.usersRepository.save(newUser);
+      this.logger.log(
+        `새 사용자 생성: ${savedUser.email} (ID: ${savedUser.id})`,
+      );
+
+      return this.toSafe(savedUser);
+    } catch (error) {
+      this.logger.error('사용자 생성 실패:', error);
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        '사용자 생성 중 오류가 발생했습니다.',
+      );
+    }
   }
 
-  //로그인
-  async login(
-    email: string,
-    pass: string,
-  ): Promise<{ accessToken: string }> {
-    const user = await this.usersRepository.findOneBy({ email });
+  /**
+   * 내부용: ID로 회원 조회 (password 포함)
+   */
+  async findById(id: number): Promise<User | null> {
+    try {
+      return await this.usersRepository.findOne({
+        where: { id },
+        select: {
+          id: true,
+          email: true,
+          password: true, // 내부 사용을 위해 password 필드 포함
+          nickname: true,
+          name: true,
+          interestCrops: true,
+          userType: true,
+          profileImage: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`사용자 조회 실패 (ID: ${id}):`, error);
+      return null;
+    }
+  }
+
+  /**
+   * 내부용: 이메일로 회원 조회 (password 포함)
+   */
+  async findByEmail(email: string): Promise<User | null> {
+    try {
+      return await this.usersRepository.findOne({
+        where: { email: email.toLowerCase() },
+        select: {
+          id: true,
+          email: true,
+          password: true, // 로그인 검증을 위해 password 필드 포함
+          nickname: true,
+          name: true,
+          interestCrops: true,
+          userType: true,
+          profileImage: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`사용자 조회 실패 (이메일: ${email}):`, error);
+      return null;
+    }
+  }
+
+  /**
+   * 외부 응답용: ID로 회원 조회 (password 제외)
+   */
+  async findSafeById(id: number): Promise<Omit<User, 'password'> | null> {
+    try {
+      const user = await this.usersRepository.findOne({
+        where: { id },
+        select: {
+          id: true,
+          email: true,
+          nickname: true,
+          name: true,
+          interestCrops: true,
+          userType: true,
+          profileImage: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+      return user ?? null;
+    } catch (error) {
+      this.logger.error(`안전한 사용자 조회 실패 (ID: ${id}):`, error);
+      return null;
+    }
+  }
+
+  /**
+   * 프로필 정보 수정 (마이페이지용, 응답: safe)
+   */
+  async updateProfile(
+    id: number,
+    profileUpdateDto: ProfileUpdateDto,
+  ): Promise<Omit<User, 'password'>> {
+    const user = await this.findById(id);
     if (!user) {
-      throw new UnauthorizedException('존재하지 않는 이메일입니다.');
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
     }
 
-    const isMatch = await bcrypt.compare(pass, user.password);
-    if (!isMatch) {
-      throw new UnauthorizedException('비밀번호가 일치하지 않습니다.');
+    try {
+      // 닉네임 업데이트
+      if (profileUpdateDto.nickname !== undefined) {
+        user.nickname = profileUpdateDto.nickname.trim();
+      }
+
+      // 사용자 이름 업데이트
+      if (profileUpdateDto.name !== undefined) {
+        user.name =
+          profileUpdateDto.name && typeof profileUpdateDto.name === 'string'
+            ? profileUpdateDto.name.trim()
+            : null;
+      }
+
+      // 관심 작물 업데이트
+      if (profileUpdateDto.interestCrops !== undefined) {
+        user.interestCrops =
+          profileUpdateDto.interestCrops &&
+          typeof profileUpdateDto.interestCrops === 'string'
+            ? profileUpdateDto.interestCrops.trim()
+            : null;
+      }
+
+      // 사용자 타입 업데이트
+      if (profileUpdateDto.userType !== undefined) {
+        user.userType = profileUpdateDto.userType;
+      }
+
+      const updatedUser = await this.usersRepository.save(user);
+      this.logger.log(
+        `프로필 정보 업데이트: ${updatedUser.email} (ID: ${updatedUser.id})`,
+      );
+
+      return this.toSafe(updatedUser);
+    } catch (error) {
+      this.logger.error(`프로필 업데이트 실패 (ID: ${id}):`, error);
+      throw new InternalServerErrorException(
+        '프로필 정보 수정 중 오류가 발생했습니다.',
+      );
     }
-
-    const payload = { sub: user.id, email: user.email };
-
-    return {
-      accessToken: this.jwtService.sign(payload),
-    };
   }
 
-  //사용자 정보 수정
+  /**
+   * 회원 정보 수정 (관리자용, 응답: safe)
+   */
   async update(
     id: number,
     updateUserDto: UpdateUserDto,
   ): Promise<Omit<User, 'password'>> {
-    const user = await this.usersRepository.findOneBy({ id });
+    const user = await this.findById(id);
     if (!user) {
       throw new NotFoundException('사용자를 찾을 수 없습니다.');
     }
-    //닉네임 change
-    if (updateUserDto.nickname) {
-      user.nickname = updateUserDto.nickname;
-    }
-    //비밀번호 change
-    if (updateUserDto.password) {
-      user.password = await bcrypt.hash(updateUserDto.password, 10);
-    }
 
-    const updatedUser = await this.usersRepository.save(user);
+    try {
+      // 이메일 업데이트 (중복 체크)
+      if (updateUserDto.email !== undefined) {
+        const emailLower = updateUserDto.email.toLowerCase().trim();
+        if (emailLower !== user.email) {
+          const existingEmail = await this.usersRepository.findOne({
+            where: { email: emailLower },
+          });
+          if (existingEmail) {
+            throw new ConflictException('이미 사용 중인 이메일입니다.');
+          }
+          user.email = emailLower;
+        }
+      }
 
-    const { password, ...result } = updatedUser;
-    return result;
+      // 비밀번호 업데이트
+      if (updateUserDto.password) {
+        user.password = await this.hashPassword(updateUserDto.password);
+      }
+
+      // 닉네임 업데이트
+      if (updateUserDto.nickname !== undefined) {
+        user.nickname = updateUserDto.nickname.trim();
+      }
+
+      // 사용자 이름 업데이트
+      if (updateUserDto.name !== undefined) {
+        user.name =
+          updateUserDto.name && typeof updateUserDto.name === 'string'
+            ? updateUserDto.name.trim()
+            : null;
+      }
+
+      // 관심 작물 업데이트
+      if (updateUserDto.interestCrops !== undefined) {
+        user.interestCrops =
+          updateUserDto.interestCrops &&
+          typeof updateUserDto.interestCrops === 'string'
+            ? updateUserDto.interestCrops.trim()
+            : null;
+      }
+
+      // 사용자 타입 업데이트
+      if (updateUserDto.userType !== undefined) {
+        user.userType = updateUserDto.userType;
+      }
+
+      const updatedUser = await this.usersRepository.save(user);
+      this.logger.log(
+        `사용자 정보 업데이트: ${updatedUser.email} (ID: ${updatedUser.id})`,
+      );
+
+      return this.toSafe(updatedUser);
+    } catch (error) {
+      this.logger.error(`사용자 업데이트 실패 (ID: ${id}):`, error);
+      throw new InternalServerErrorException(
+        '사용자 정보 수정 중 오류가 발생했습니다.',
+      );
+    }
   }
 
-  //프로필 이미지
+  /**
+   * 프로필 이미지 업로드 (응답: safe)
+   */
   async uploadProfileImage(
     userId: number,
-    filePath: string,
+    imagePath: string,
   ): Promise<Omit<User, 'password'>> {
-    const user = await this.usersRepository.findOneBy({ id: userId });
+    const user = await this.findById(userId);
     if (!user) {
       throw new NotFoundException('사용자를 찾을 수 없습니다.');
     }
 
-    user.profileImage = filePath;
-    const savedUser = await this.usersRepository.save(user);
-    //password 반환 X
-    const { password, ...result } = savedUser;
-    return result;
+    try {
+      // 이전 이미지 삭제
+      if (user.profileImage) {
+        await this.deleteOldProfileImage(user.profileImage);
+      }
+
+      // 새 이미지 경로 저장
+      user.profileImage = imagePath;
+      const savedUser = await this.usersRepository.save(user);
+
+      this.logger.log(
+        `프로필 이미지 업데이트: ${savedUser.email} (ID: ${savedUser.id})`,
+      );
+      return this.toSafe(savedUser);
+    } catch (error) {
+      this.logger.error(`프로필 이미지 업로드 실패 (ID: ${userId}):`, error);
+      throw new InternalServerErrorException(
+        '프로필 이미지 업로드 중 오류가 발생했습니다.',
+      );
+    }
+  }
+
+  /**
+   * 비밀번호 검증
+   */
+  async validatePassword(
+    plainPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    try {
+      return await bcrypt.compare(plainPassword, hashedPassword);
+    } catch (error) {
+      this.logger.error('비밀번호 검증 실패:', error);
+      return false;
+    }
   }
 }

@@ -29,5 +29,5 @@ export class Log {
     onDelete: 'SET NULL',
     nullable: true,
   })
-  crop: Crop;
+  crop: Crop | null;
 }

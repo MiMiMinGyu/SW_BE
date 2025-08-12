@@ -14,11 +14,31 @@ export class Crop {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ length: 50 })
   name: string;
 
-  @CreateDateColumn()
+  @Column({ length: 50, nullable: true })
+  variety?: string;
+
+  @Column({ type: 'date' })
   plantingDate: Date;
+
+  @Column({ type: 'date', nullable: true })
+  expectedHarvestDate?: Date;
+
+  @Column({
+    type: 'varchar',
+    length: 20,
+    default: 'growing',
+    enum: ['growing', 'harvested', 'dead'],
+  })
+  status: string;
+
+  @Column({ type: 'text', nullable: true })
+  description?: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
 
   @ManyToOne(() => User, (user) => user.crops, { onDelete: 'CASCADE' })
   user: User;
