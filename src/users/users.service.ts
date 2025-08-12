@@ -59,7 +59,11 @@ export class UsersService {
    * 이전 프로필 이미지 삭제
    */
   private async deleteOldProfileImage(imagePath: string): Promise<void> {
-    if (!imagePath || imagePath.startsWith('http')) {
+    if (
+      !imagePath ||
+      imagePath.startsWith('http') ||
+      imagePath === '/uploads/farmer_icon.png'
+    ) {
       return; // URL이거나 기본 이미지인 경우 건너뛰기
     }
 
@@ -106,6 +110,7 @@ export class UsersService {
           interestCrops && typeof interestCrops === 'string'
             ? interestCrops
             : null,
+        profileImage: '/uploads/farmer_icon.png', // 기본 프로필 이미지 설정
       });
 
       const savedUser = await this.usersRepository.save(newUser);

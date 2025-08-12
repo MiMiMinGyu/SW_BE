@@ -9,6 +9,10 @@ import { join } from 'path';
 import { UsersModule } from './users/users.module';
 import { LogsModule } from './logs/logs.module';
 import { CropsModule } from './crops/crops.module';
+import { SchedulesModule } from './schedules/schedules.module';
+import { PostsModule } from './posts/posts.module';
+import { TagsModule } from './tags/tags.module';
+import { CommentsModule } from './comments/comments.module';
 import { AuthModule } from './auth/auth.module';
 
 import { multerConfigFactory } from './common/config/multer.config';
@@ -65,6 +69,10 @@ import { createTypeOrmConfig } from './configs/typeorm.config';
     UsersModule,
     LogsModule,
     CropsModule,
+    SchedulesModule,
+    PostsModule,
+    TagsModule,
+    CommentsModule,
     AuthModule,
   ],
 })

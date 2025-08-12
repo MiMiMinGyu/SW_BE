@@ -1,45 +1,52 @@
-import { plainToInstance } from 'class-transformer';
-import { IsString, IsNumber, IsOptional, validateSync } from 'class-validator';
+import { plainToInstance, Transform, Type } from 'class-transformer';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  validateSync,
+  IsEnum,
+} from 'class-validator';
+
+enum Environment {
+  Development = 'development',
+  Production = 'production',
+  Test = 'test',
+}
 
 class EnvironmentVariables {
-  @IsString()
+  @IsEnum(Environment)
   @IsOptional()
-  NODE_ENV?: string = 'development';
+  NODE_ENV: Environment = Environment.Development;
+
+  @IsString()
+  DB_HOST: string;
 
   @IsNumber()
+  @Transform(({ value }: { value: string }) => parseInt(value, 10))
   @IsOptional()
-  PORT?: number = 3000;
+  DB_PORT: number = 5432;
+
+  @IsString()
+  DB_USERNAME: string;
 
   @IsString()
   @IsOptional()
-  DB_HOST?: string = 'localhost';
-
-  @IsNumber()
-  @IsOptional()
-  DB_PORT?: number = 5432;
+  DB_PASSWORD: string;
 
   @IsString()
-  @IsOptional()
-  DB_USERNAME?: string = 'postgres';
-
-  @IsString()
-  @IsOptional()
-  DB_PASSWORD?: string = '';
-
-  @IsString()
-  @IsOptional()
-  DB_DATABASE?: string = 'smartfarm';
+  DB_DATABASE: string;
 
   @IsString()
   JWT_SECRET: string;
 
   @IsString()
   @IsOptional()
-  JWT_EXPIRES_IN?: string = '1h';
+  JWT_EXPIRES_IN: string = '1h';
 
-  @IsString()
+  @IsNumber()
+  @Transform(({ value }: { value: string }) => parseInt(value, 10))
   @IsOptional()
-  FRONTEND_URL?: string = 'http://localhost:3000';
+  PORT: number = 3000;
 }
 
 export function validateConfig(config: Record<string, unknown>) {
@@ -52,7 +59,7 @@ export function validateConfig(config: Record<string, unknown>) {
   });
 
   if (errors.length > 0) {
-    throw new Error(errors.toString());
+    throw new Error(`Configuration validation failed: ${errors.toString()}`);
   }
 
   return validatedConfig;
