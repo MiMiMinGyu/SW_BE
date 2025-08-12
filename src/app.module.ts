@@ -4,68 +4,68 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { MulterModule } from '@nestjs/platform-express';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { diskStorage } from 'multer';
 import { join } from 'path';
-import * as path from 'path';
 
 import { UsersModule } from './users/users.module';
 import { LogsModule } from './logs/logs.module';
 import { CropsModule } from './crops/crops.module';
+import { AuthModule } from './auth/auth.module';
 
-import { User } from './users/entities/user.entity';
-import { Log } from './logs/entities/log.entity';
-import { Crop } from './crops/entities/crop.entity';
+import { multerConfigFactory } from './common/config/multer.config';
+import { validateConfig } from './common/config/config.validation';
+import { createTypeOrmConfig } from './configs/typeorm.config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validate: validateConfig, // 환경변수 검증 추가
+    }),
+
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USERNAME'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_DATABASE'),
-        entities: [User, Log, Crop],
-        synchronize: true,
-      }),
+      useFactory: createTypeOrmConfig,
     }),
+
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '1h' },
-      }),
       global: true,
+      useFactory: (configService: ConfigService) => {
+        const secret = configService.get<string>('JWT_SECRET');
+        const expiresIn = configService.get<string>('JWT_EXPIRES_IN', '1h');
+
+        if (!secret) {
+          throw new Error('JWT_SECRET environment variable is required');
+        }
+
+        return {
+          secret,
+          signOptions: { expiresIn },
+        };
+      },
     }),
-    MulterModule.register({
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, callback) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = path.extname(file.originalname);
-          const filename = `${path.basename(
-            file.originalname,
-            ext,
-          )}-${uniqueSuffix}${ext}`;
-          callback(null, filename);
-        },
-      }),
+
+    // 중앙화된 multer 설정 사용: 파일 업로드 처리를 위한 도구
+    MulterModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: multerConfigFactory,
     }),
+
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
+      serveStaticOptions: {
+        maxAge: '1d', // 캐시 설정
+      },
     }),
+
     UsersModule,
     LogsModule,
     CropsModule,
+    AuthModule,
   ],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}
