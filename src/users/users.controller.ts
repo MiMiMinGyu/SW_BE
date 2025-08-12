@@ -23,7 +23,7 @@ import {
 } from '@nestjs/swagger';
 
 import { UsersService } from './users.service';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { ProfileUpdateDto } from './dto/profile-update.dto';
 import { User } from './entities/user.entity';
 import { UserResponseDto } from './dto/user-response.dto';
 import { profileImageMulterConfig } from '../common/config/multer.config';
@@ -85,10 +85,10 @@ export class UsersController {
   })
   async updateProfile(
     @Req() req: AuthenticatedRequest,
-    @Body() updateUserDto: UpdateUserDto,
+    @Body() profileUpdateDto: ProfileUpdateDto,
   ): Promise<Omit<User, 'password'>> {
     const { id } = req.user;
-    return this.usersService.update(id, updateUserDto);
+    return this.usersService.updateProfile(id, profileUpdateDto);
   }
 
   @UseGuards(AuthGuard('jwt'))

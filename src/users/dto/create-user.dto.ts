@@ -6,6 +6,7 @@ import {
   MaxLength,
   IsEnum,
   IsOptional,
+  Matches,
 } from 'class-validator';
 import { UserType } from '../enums/user-type.enum';
 
@@ -34,6 +35,27 @@ export class CreateUserDto {
   @MinLength(2, { message: '닉네임은 2자 이상이어야 합니다.' })
   @MaxLength(20, { message: '닉네임은 20자 이하여야 합니다.' })
   nickname: string;
+
+  @ApiProperty({
+    example: '김농부',
+    description: '사용자 이름 (2~20자)',
+    required: false,
+  })
+  @IsString({ message: '사용자 이름은 문자열이어야 합니다.' })
+  @MinLength(2, { message: '사용자 이름은 2자 이상이어야 합니다.' })
+  @MaxLength(20, { message: '사용자 이름은 20자 이하여야 합니다.' })
+  @IsOptional()
+  name?: string | null;
+
+  @ApiProperty({
+    example: '토마토, 오이, 상추',
+    description: '관심 작물 (콤마로 구분)',
+    required: false,
+  })
+  @IsString({ message: '관심 작물은 문자열이어야 합니다.' })
+  @MaxLength(500, { message: '관심 작물은 500자 이하여야 합니다.' })
+  @IsOptional()
+  interestCrops?: string | null;
 
   @ApiProperty({
     enum: UserType,

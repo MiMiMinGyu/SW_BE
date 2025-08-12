@@ -13,6 +13,7 @@ import * as path from 'path';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ProfileUpdateDto } from './dto/profile-update.dto';
 import { User } from './entities/user.entity';
 
 @Injectable()
@@ -46,7 +47,12 @@ export class UsersService {
     const { password: _removed, ...safeUser } = user as User & {
       password?: string;
     };
-    return safeUser;
+    return {
+      ...safeUser,
+      name: safeUser.name ?? null,
+      interestCrops: safeUser.interestCrops ?? null,
+      profileImage: safeUser.profileImage ?? null,
+    } as Omit<User, 'password'>;
   }
 
   /**
@@ -76,7 +82,8 @@ export class UsersService {
    * 회원 생성 (응답: safe)
    */
   async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
-    const { email, password, nickname, userType } = createUserDto;
+    const { email, password, nickname, userType, name, interestCrops } =
+      createUserDto;
 
     // 이메일 중복 체크
     const existingUser = await this.usersRepository.findOne({
@@ -94,6 +101,11 @@ export class UsersService {
         password: hashedPassword,
         nickname,
         userType,
+        name: name && typeof name === 'string' ? name : null,
+        interestCrops:
+          interestCrops && typeof interestCrops === 'string'
+            ? interestCrops
+            : null,
       });
 
       const savedUser = await this.usersRepository.save(newUser);
@@ -125,6 +137,8 @@ export class UsersService {
           email: true,
           password: true, // 내부 사용을 위해 password 필드 포함
           nickname: true,
+          name: true,
+          interestCrops: true,
           userType: true,
           profileImage: true,
           createdAt: true,
@@ -149,6 +163,8 @@ export class UsersService {
           email: true,
           password: true, // 로그인 검증을 위해 password 필드 포함
           nickname: true,
+          name: true,
+          interestCrops: true,
           userType: true,
           profileImage: true,
           createdAt: true,
@@ -172,6 +188,8 @@ export class UsersService {
           id: true,
           email: true,
           nickname: true,
+          name: true,
+          interestCrops: true,
           userType: true,
           profileImage: true,
           createdAt: true,
@@ -186,7 +204,61 @@ export class UsersService {
   }
 
   /**
-   * 회원 정보 수정 (응답: safe)
+   * 프로필 정보 수정 (마이페이지용, 응답: safe)
+   */
+  async updateProfile(
+    id: number,
+    profileUpdateDto: ProfileUpdateDto,
+  ): Promise<Omit<User, 'password'>> {
+    const user = await this.findById(id);
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+
+    try {
+      // 닉네임 업데이트
+      if (profileUpdateDto.nickname !== undefined) {
+        user.nickname = profileUpdateDto.nickname.trim();
+      }
+
+      // 사용자 이름 업데이트
+      if (profileUpdateDto.name !== undefined) {
+        user.name =
+          profileUpdateDto.name && typeof profileUpdateDto.name === 'string'
+            ? profileUpdateDto.name.trim()
+            : null;
+      }
+
+      // 관심 작물 업데이트
+      if (profileUpdateDto.interestCrops !== undefined) {
+        user.interestCrops =
+          profileUpdateDto.interestCrops &&
+          typeof profileUpdateDto.interestCrops === 'string'
+            ? profileUpdateDto.interestCrops.trim()
+            : null;
+      }
+
+      // 사용자 타입 업데이트
+      if (profileUpdateDto.userType !== undefined) {
+        user.userType = profileUpdateDto.userType;
+      }
+
+      const updatedUser = await this.usersRepository.save(user);
+      this.logger.log(
+        `프로필 정보 업데이트: ${updatedUser.email} (ID: ${updatedUser.id})`,
+      );
+
+      return this.toSafe(updatedUser);
+    } catch (error) {
+      this.logger.error(`프로필 업데이트 실패 (ID: ${id}):`, error);
+      throw new InternalServerErrorException(
+        '프로필 정보 수정 중 오류가 발생했습니다.',
+      );
+    }
+  }
+
+  /**
+   * 회원 정보 수정 (관리자용, 응답: safe)
    */
   async update(
     id: number,
@@ -198,14 +270,50 @@ export class UsersService {
     }
 
     try {
-      // 닉네임 업데이트
-      if (updateUserDto.nickname !== undefined) {
-        user.nickname = updateUserDto.nickname.trim();
+      // 이메일 업데이트 (중복 체크)
+      if (updateUserDto.email !== undefined) {
+        const emailLower = updateUserDto.email.toLowerCase().trim();
+        if (emailLower !== user.email) {
+          const existingEmail = await this.usersRepository.findOne({
+            where: { email: emailLower },
+          });
+          if (existingEmail) {
+            throw new ConflictException('이미 사용 중인 이메일입니다.');
+          }
+          user.email = emailLower;
+        }
       }
 
       // 비밀번호 업데이트
       if (updateUserDto.password) {
         user.password = await this.hashPassword(updateUserDto.password);
+      }
+
+      // 닉네임 업데이트
+      if (updateUserDto.nickname !== undefined) {
+        user.nickname = updateUserDto.nickname.trim();
+      }
+
+      // 사용자 이름 업데이트
+      if (updateUserDto.name !== undefined) {
+        user.name =
+          updateUserDto.name && typeof updateUserDto.name === 'string'
+            ? updateUserDto.name.trim()
+            : null;
+      }
+
+      // 관심 작물 업데이트
+      if (updateUserDto.interestCrops !== undefined) {
+        user.interestCrops =
+          updateUserDto.interestCrops &&
+          typeof updateUserDto.interestCrops === 'string'
+            ? updateUserDto.interestCrops.trim()
+            : null;
+      }
+
+      // 사용자 타입 업데이트
+      if (updateUserDto.userType !== undefined) {
+        user.userType = updateUserDto.userType;
       }
 
       const updatedUser = await this.usersRepository.save(user);

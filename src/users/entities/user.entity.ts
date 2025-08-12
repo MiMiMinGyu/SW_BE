@@ -24,8 +24,14 @@ export class User {
   @Column({ length: 50 })
   nickname: string;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  name: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  interestCrops: string | null;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
-  profileImage: string;
+  profileImage: string | null;
 
   @Column({
     type: 'enum',

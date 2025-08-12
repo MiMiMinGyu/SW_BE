@@ -21,6 +21,20 @@ export class UserResponseDto {
   nickname: string;
 
   @ApiProperty({
+    example: '김농부',
+    description: '사용자 이름',
+    nullable: true,
+  })
+  name?: string | null;
+
+  @ApiProperty({
+    example: '토마토, 오이, 상추',
+    description: '관심 작물',
+    nullable: true,
+  })
+  interestCrops?: string | null;
+
+  @ApiProperty({
     enum: UserType,
     example: UserType.HOBBY,
     description: '사용자 타입',
