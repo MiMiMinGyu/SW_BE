@@ -1,4 +1,5 @@
 import { User } from '../../users/entities/user.entity';
+import { Crop } from '../../crops/entities/crop.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -15,39 +16,27 @@ export class Schedule {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 200 })
+  @Column({ length: 200, comment: '일지 제목' })
   title: string;
 
-  @Column({ type: 'text', nullable: true })
-  description: string | null;
+  @Column({ type: 'text', nullable: true, comment: '일지 내용' })
+  content: string | null;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', comment: '일지 작성 날짜' })
   date: Date;
 
-  @Column({ type: 'time', nullable: true })
-  time: string | null;
+  @Column({ type: 'varchar', nullable: true, comment: '첨부 이미지 경로' })
+  image: string | null;
 
-  @Column({
-    type: 'varchar',
-    length: 20,
-    default: 'personal',
-    comment: '일정 카테고리: personal, farming, meeting, etc.',
-  })
-  category: string;
-
-  @Column({
-    type: 'varchar',
-    length: 7,
-    default: '#4285f4',
-    comment: '캘린더에서 표시될 색상 (hex 코드)',
-  })
-  color: string;
-
-  @Column({ default: false })
-  isCompleted: boolean;
-
-  @ManyToOne(() => User, (user) => user.schedules, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   user: User;
+
+  @ManyToOne(() => Crop, {
+    onDelete: 'CASCADE',
+    nullable: false,
+    eager: false,
+  })
+  crop: Crop;
 
   @CreateDateColumn()
   createdAt: Date;

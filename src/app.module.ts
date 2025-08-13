@@ -7,7 +7,6 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 
 import { UsersModule } from './users/users.module';
-import { LogsModule } from './logs/logs.module';
 import { CropsModule } from './crops/crops.module';
 import { SchedulesModule } from './schedules/schedules.module';
 import { PostsModule } from './posts/posts.module';
@@ -67,7 +66,6 @@ import { createTypeOrmConfig } from './configs/typeorm.config';
     }),
 
     UsersModule,
-    LogsModule,
     CropsModule,
     SchedulesModule,
     PostsModule,

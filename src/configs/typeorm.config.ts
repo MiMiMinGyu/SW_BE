@@ -2,8 +2,8 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 
 import { User } from '../users/entities/user.entity';
-import { Log } from '../logs/entities/log.entity';
 import { Crop } from '../crops/entities/crop.entity';
+import { Schedule } from '../schedules/entities/schedule.entity';
 
 /**
  * TypeORM 설정 팩토리 함수
@@ -25,7 +25,7 @@ export const createTypeOrmConfig = (
     database: configService.get<string>('DB_DATABASE'),
 
     // 엔티티 설정
-    entities: [User, Log, Crop],
+    entities: [User, Crop, Schedule],
 
     // 환경별 설정
     synchronize: isDevelopment, // 개발환경에서만 true
@@ -89,7 +89,7 @@ export const createDirectTypeOrmConfig = (): TypeOrmModuleOptions => {
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
-    entities: [User, Log, Crop],
+    entities: [User, Crop, Schedule],
     synchronize: isDevelopment,
     logging: isDevelopment ? true : ['error', 'warn'],
     ssl: nodeEnv === 'production' ? { rejectUnauthorized: false } : false,

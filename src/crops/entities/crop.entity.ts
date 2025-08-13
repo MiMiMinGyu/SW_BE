@@ -1,5 +1,4 @@
 import { User } from '../../users/entities/user.entity';
-import { Log } from '../../logs/entities/log.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -42,7 +41,4 @@ export class Crop {
 
   @ManyToOne(() => User, (user) => user.crops, { onDelete: 'CASCADE' })
   user: User;
-
-  @OneToMany(() => Log, (log) => log.crop)
-  logs: Log[];
 }

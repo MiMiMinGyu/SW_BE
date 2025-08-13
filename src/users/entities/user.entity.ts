@@ -1,6 +1,4 @@
-import { Log } from '../../logs/entities/log.entity';
 import { Crop } from '../../crops/entities/crop.entity';
-import { Schedule } from '../../schedules/entities/schedule.entity';
 import { Post } from '../../posts/entities/post.entity';
 import { Comment } from '../../comments/entities/comment.entity';
 import { PostLike } from '../../posts/entities/post-like.entity';
@@ -44,14 +42,8 @@ export class User {
   })
   userType: UserType;
 
-  @OneToMany(() => Log, (log) => log.user)
-  logs: Log[];
-
   @OneToMany(() => Crop, (crop) => crop.user)
   crops: Crop[];
-
-  @OneToMany(() => Schedule, (schedule) => schedule.user)
-  schedules: Schedule[];
 
   @OneToMany(() => Post, (post) => post.user)
   posts: Post[];

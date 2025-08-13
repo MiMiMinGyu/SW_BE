@@ -3,8 +3,13 @@ import { config } from 'dotenv';
 import { join } from 'path';
 
 import { User } from '../users/entities/user.entity';
-import { Log } from '../logs/entities/log.entity';
 import { Crop } from '../crops/entities/crop.entity';
+import { Schedule } from '../schedules/entities/schedule.entity';
+import { Post } from '../posts/entities/post.entity';
+import { Comment } from '../comments/entities/comment.entity';
+import { PostLike } from '../posts/entities/post-like.entity';
+import { Tag } from '../tags/entities/tag.entity';
+import { PostTag } from '../posts/entities/post-tag.entity';
 
 // 환경변수 로드
 config();
@@ -32,8 +37,13 @@ const AppDataSource = new DataSource({
   // 엔티티 경로 (컴파일된 JS 파일과 TS 파일 모두 지원)
   entities: [
     User,
-    Log,
     Crop,
+    Schedule,
+    Post,
+    Comment,
+    PostLike,
+    Tag,
+    PostTag,
     // 추가 경로 방식 (필요시 사용)
     // join(__dirname, '../**/*.entity{.ts,.js}')
   ],
