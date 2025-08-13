@@ -30,7 +30,7 @@ import { LogsService } from './logs.service';
 import { CreateLogDto } from './dto/create-log.dto';
 import { UpdateLogDto } from './dto/update-log.dto';
 import { LogResponseDto, LogListResponseDto } from './dto/log-response.dto';
-import { profileImageMulterConfig } from '../common/config/multer.config';
+import { logImageMulterConfig } from '../common/config/multer.config';
 import { User } from '../users/entities/user.entity';
 import {
   ApiCreatedResponse,
@@ -52,7 +52,7 @@ export class LogsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(FileInterceptor('image', profileImageMulterConfig))
+  @UseInterceptors(FileInterceptor('image', logImageMulterConfig))
   @ApiCreatedResponse({
     summary: '농사일지 생성',
     description:
@@ -147,7 +147,7 @@ export class LogsController {
   }
 
   @Patch(':id')
-  @UseInterceptors(FileInterceptor('image', profileImageMulterConfig))
+  @UseInterceptors(FileInterceptor('image', logImageMulterConfig))
   @ApiSuccessResponse({
     summary: '농사일지 수정',
     description:
