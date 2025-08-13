@@ -13,6 +13,7 @@ import { CropResponseDto } from './dto/crop-response.dto';
 import { Crop } from './entities/crop.entity';
 import { User } from '../users/entities/user.entity';
 import { UserType } from '../users/enums/user-type.enum';
+import { Schedule } from '../schedules/entities/schedule.entity';
 
 @Injectable()
 export class CropsService {
@@ -21,12 +22,14 @@ export class CropsService {
   constructor(
     @InjectRepository(Crop)
     private readonly cropsRepository: Repository<Crop>,
+    @InjectRepository(Schedule)
+    private readonly schedulesRepository: Repository<Schedule>,
   ) {}
 
   /**
    * 안전한 작물 정보 반환 (사용자 비밀번호 제거)
    */
-  private toSafeCrop(crop: Crop): CropResponseDto {
+  private async toSafeCrop(crop: Crop): Promise<CropResponseDto> {
     const result: CropResponseDto = {
       id: crop.id,
       name: crop.name,
@@ -55,7 +58,9 @@ export class CropsService {
             createdAt: new Date(),
             updatedAt: new Date(),
           },
-      logCount: crop.logs ? crop.logs.length : 0,
+      logCount: await this.schedulesRepository.count({
+        where: { crop: { id: crop.id } }
+      }),
     };
     return result;
   }
@@ -112,7 +117,7 @@ export class CropsService {
         relations: ['user'],
       });
 
-      return this.toSafeCrop(cropWithUser!);
+      return await this.toSafeCrop(cropWithUser!);
     } catch (error) {
       this.logger.error(`작물 생성 실패 (사용자: ${user.id}):`, error);
       if (error instanceof BadRequestException) {
@@ -131,11 +136,11 @@ export class CropsService {
     try {
       const crops = await this.cropsRepository.find({
         where: { user: { id: userId } },
-        relations: ['user', 'logs'],
+        relations: ['user'],
         order: { createdAt: 'DESC' },
       });
 
-      return crops.map((crop) => this.toSafeCrop(crop));
+      return await Promise.all(crops.map((crop) => this.toSafeCrop(crop)));
     } catch (error) {
       this.logger.error(`작물 목록 조회 실패 (사용자: ${userId}):`, error);
       throw new InternalServerErrorException(
@@ -151,7 +156,7 @@ export class CropsService {
     try {
       const crop = await this.cropsRepository.findOne({
         where: { id, user: { id: userId } },
-        relations: ['user', 'logs'],
+        relations: ['user'],
       });
 
       if (!crop) {
@@ -160,7 +165,7 @@ export class CropsService {
         );
       }
 
-      return this.toSafeCrop(crop);
+      return await this.toSafeCrop(crop);
     } catch (error) {
       this.logger.error(
         `작물 조회 실패 (ID: ${id}, 사용자: ${userId}):`,
@@ -228,10 +233,10 @@ export class CropsService {
       // 관계 데이터와 함께 조회
       const cropWithRelations = await this.cropsRepository.findOne({
         where: { id: updatedCrop.id },
-        relations: ['user', 'logs'],
+        relations: ['user'],
       });
 
-      return this.toSafeCrop(cropWithRelations!);
+      return await this.toSafeCrop(cropWithRelations!);
     } catch (error) {
       this.logger.error(
         `작물 수정 실패 (ID: ${id}, 사용자: ${userId}):`,
