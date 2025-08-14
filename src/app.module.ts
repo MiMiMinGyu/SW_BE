@@ -12,6 +12,7 @@ import { SchedulesModule } from './schedules/schedules.module';
 import { PostsModule } from './posts/posts.module';
 import { TagsModule } from './tags/tags.module';
 import { CommentsModule } from './comments/comments.module';
+import { ReservationsModule } from './reservations/reservations.module';
 import { AuthModule } from './auth/auth.module';
 
 import { multerConfigFactory } from './common/config/multer.config';
@@ -71,6 +72,7 @@ import { createTypeOrmConfig } from './configs/typeorm.config';
     PostsModule,
     TagsModule,
     CommentsModule,
+    ReservationsModule,
     AuthModule,
   ],
 })

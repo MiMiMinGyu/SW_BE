@@ -49,7 +49,6 @@ export class PostResponseDto {
   @ApiProperty({ example: 8, description: '댓글 수' })
   commentCount: number;
 
-
   @ApiProperty({
     type: UserResponseDto,
     description: '게시글 작성자 정보',

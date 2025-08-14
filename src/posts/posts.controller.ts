@@ -21,13 +21,14 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { PostsService, PostQueryOptions } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
+import { CreateReservationPostDto } from './dto/create-reservation-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostResponseDto, PostListResponseDto } from './dto/post-response.dto';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { ApiResponseDto } from '../common/dto/api-response.dto';
 import { PostCategory } from './enums/post-category.enum';
 
-@ApiTags('게시판')
+@ApiTags('3. Post - 게시글 관리')
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
@@ -58,22 +59,65 @@ export class PostsController {
     };
   }
 
+  @Post('reservation')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({
+    summary: '예약 게시글 작성',
+    description: '전문농업인만 작성 가능한 예약 게시글을 작성합니다.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: '예약 게시글이 성공적으로 작성되었습니다.',
+    type: ApiResponseDto<PostResponseDto>,
+  })
+  @ApiResponse({ status: 400, description: '잘못된 요청 데이터' })
+  @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
+  @ApiResponse({ status: 403, description: '전문농업인만 작성 가능' })
+  async createReservationPost(
+    @Body() createReservationPostDto: CreateReservationPostDto,
+    @GetUser('id') userId: number,
+  ): Promise<ApiResponseDto<PostResponseDto>> {
+    const data = await this.postsService.createReservationPost(
+      createReservationPostDto,
+      userId,
+    );
+    return {
+      success: true,
+      message: '예약 게시글이 성공적으로 작성되었습니다.',
+      data,
+    };
+  }
+
   @Get()
   @ApiOperation({
     summary: '게시글 목록 조회',
-    description:
-      '게시글 목록을 조회합니다. 카테고리, 검색어, 정렬 등의 필터를 지원합니다.',
+    description: `게시글 목록을 조회합니다. 다양한 필터와 검색 옵션을 제공합니다.
+    
+📋 주요 기능:
+• 텍스트 검색: 제목/내용에서 키워드 검색
+• 카테고리 필터: 일반글/질문/일지/노하우/예약글 분류
+• 태그 검색: 관련 태그로 필터링
+• 정렬: 최신순/인기순/조회순
+
+🔍 검색 예시:
+• ?search=토마토 (제목/내용에 "토마토" 포함)
+• ?category=reservation&search=체험 (예약글 중 "체험" 검색)
+• ?tags=배추,병해충 (배추, 병해충 태그)`,
   })
   @ApiQuery({
     name: 'category',
     required: false,
     enum: PostCategory,
-    description: '카테고리 필터 (전체/질문/일지/노하우)',
+    description: '카테고리 필터 (전체/질문/일지/노하우/예약)',
+    example: 'reservation',
   })
   @ApiQuery({
     name: 'search',
     required: false,
-    description: '검색어 (제목, 내용 검색)',
+    type: String,
+    description: '검색어 - 게시글 제목이나 내용에서 키워드를 검색합니다',
+    example: '토마토',
   })
   @ApiQuery({
     name: 'tags',

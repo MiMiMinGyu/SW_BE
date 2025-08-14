@@ -60,10 +60,6 @@ async function bootstrap() {
           description: 'JWT 토큰을 입력하세요',
           in: 'header',
         })
-        .addTag('Auth', '인증 관련 API')
-        .addTag('Users', '사용자 관련 API')
-        .addTag('Logs', '로그 관련 API')
-        .addTag('Crops', '작물 관련 API')
         .build();
 
       const document = SwaggerModule.createDocument(app, config);

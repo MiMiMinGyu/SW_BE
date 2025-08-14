@@ -5,7 +5,6 @@ import {
   MinLength,
   MaxLength,
   IsEmail,
-  Matches,
   IsEnum,
 } from 'class-validator';
 import { UserType } from '../enums/user-type.enum';

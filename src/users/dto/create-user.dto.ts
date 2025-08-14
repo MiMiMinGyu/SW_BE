@@ -6,7 +6,6 @@ import {
   MaxLength,
   IsEnum,
   IsOptional,
-  Matches,
 } from 'class-validator';
 import { UserType } from '../enums/user-type.enum';
 

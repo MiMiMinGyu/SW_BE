@@ -11,9 +11,11 @@ import { PostTag } from './entities/post-tag.entity';
 import { Tag } from '../tags/entities/tag.entity';
 import { User } from '../users/entities/user.entity';
 import { CreatePostDto } from './dto/create-post.dto';
+import { CreateReservationPostDto } from './dto/create-reservation-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostResponseDto, PostListResponseDto } from './dto/post-response.dto';
 import { PostCategory } from './enums/post-category.enum';
+import { UserType } from '../users/enums/user-type.enum';
 
 export interface PostQueryOptions {
   category?: PostCategory;
@@ -59,6 +61,56 @@ export class PostsService {
     }
 
     return await this.findOneById(savedPost.id, userId);
+  }
+
+  async createReservationPost(
+    createReservationPostDto: CreateReservationPostDto,
+    userId: number,
+  ): Promise<PostResponseDto> {
+    const user = await this.getUserById(userId);
+
+    if (user.userType !== UserType.PROFESSIONAL) {
+      throw new ForbiddenException(
+        '전문농업인만 예약 게시글을 작성할 수 있습니다.',
+      );
+    }
+
+    const post = this.postsRepository.create({
+      title: createReservationPostDto.title,
+      content: createReservationPostDto.content,
+      category: PostCategory.RESERVATION,
+      price: createReservationPostDto.price,
+      maxParticipants: createReservationPostDto.maxParticipants,
+      scheduledDate: new Date(createReservationPostDto.scheduledDate),
+      location: createReservationPostDto.location,
+      images: createReservationPostDto.images
+        ? JSON.stringify(createReservationPostDto.images)
+        : null,
+      user: { id: userId } as User,
+    });
+
+    const savedPost = await this.postsRepository.save(post);
+
+    if (
+      createReservationPostDto.tags &&
+      createReservationPostDto.tags.length > 0
+    ) {
+      await this.processTags(savedPost.id, createReservationPostDto.tags);
+    }
+
+    return await this.findOneById(savedPost.id, userId);
+  }
+
+  private async getUserById(userId: number): Promise<User> {
+    const user = await this.postsRepository.manager
+      .getRepository(User)
+      .findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+
+    return user;
   }
 
   async findAll(options: PostQueryOptions = {}): Promise<PostListResponseDto> {
@@ -212,7 +264,7 @@ export class PostsService {
   ): SelectQueryBuilder<Post> {
     const { category, search, tags } = options;
 
-    if (category && category !== PostCategory.GENERAL) {
+    if (category) {
       query = query.andWhere('post.category = :category', { category });
     }
 
@@ -234,7 +286,6 @@ export class PostsService {
     query: SelectQueryBuilder<Post>,
     sortBy: string,
   ): SelectQueryBuilder<Post> {
-
     switch (sortBy) {
       case 'popular':
         return query

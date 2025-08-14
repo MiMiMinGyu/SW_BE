@@ -36,7 +36,7 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-@ApiTags('Users')
+@ApiTags('2. Users - 사용자 관련 API')
 @ApiBearerAuth()
 @Controller('users')
 export class UsersController {

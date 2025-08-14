@@ -3,4 +3,5 @@ export enum PostCategory {
   QUESTION = 'question', // 질문
   DIARY = 'diary', // 일지
   KNOWHOW = 'knowhow', // 노하우
+  RESERVATION = 'reservation', // 예약 (전문농업인 전용)
 }
