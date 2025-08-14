@@ -2,6 +2,7 @@ import { Crop } from '../../crops/entities/crop.entity';
 import { Post } from '../../posts/entities/post.entity';
 import { Comment } from '../../comments/entities/comment.entity';
 import { PostLike } from '../../posts/entities/post-like.entity';
+import { Reservation } from '../../reservations/entities/reservation.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -53,6 +54,9 @@ export class User {
 
   @OneToMany(() => PostLike, (postLike) => postLike.user)
   postLikes: PostLike[];
+
+  @OneToMany(() => Reservation, (reservation) => reservation.user)
+  reservations: Reservation[];
 
   @CreateDateColumn()
   createdAt: Date;

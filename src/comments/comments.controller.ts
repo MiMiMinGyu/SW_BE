@@ -24,7 +24,7 @@ import { CommentResponseDto, CommentListResponseDto } from './dto/comment-respon
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { ApiResponseDto } from '../common/dto/api-response.dto';
 
-@ApiTags('댓글')
+@ApiTags('5. Comment - 댓글 관리')
 @Controller('posts/:postId/comments')
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
@@ -90,7 +90,7 @@ export class CommentsController {
   }
 }
 
-@ApiTags('댓글')
+@ApiTags('5. Comment - 댓글 관리')
 @Controller('comments')
 export class CommentManagementController {
   constructor(private readonly commentsService: CommentsService) {}

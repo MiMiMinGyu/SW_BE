@@ -20,11 +20,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     const { status, message, error } = this.getErrorInfo(exception);
 
-    // 로깅
-    this.logger.error(
-      `HTTP ${status} Error: ${message} - ${request.method} ${request.url}`,
-      exception instanceof Error ? exception.stack : exception,
-    );
+    // favicon 요청은 로깅하지 않음
+    if (!request.url.includes('/favicon.ico')) {
+      // 로깅
+      this.logger.error(
+        `HTTP ${status} Error: ${message} - ${request.method} ${request.url}`,
+        exception instanceof Error ? exception.stack : exception,
+      );
+    }
 
     const errorResponse = {
       success: false,

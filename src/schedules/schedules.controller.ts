@@ -35,7 +35,7 @@ import { GetUser } from '../common/decorators/get-user.decorator';
 import { ApiResponseDto } from '../common/dto/api-response.dto';
 import { logImageMulterConfig } from '../common/config/multer.config';
 
-@ApiTags('작물일지 관리')
+@ApiTags('7. Schedule - 작물일지 관리')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller('crop-diaries')
@@ -46,7 +46,8 @@ export class SchedulesController {
   @UseInterceptors(FileInterceptor('image', logImageMulterConfig))
   @ApiOperation({
     summary: '새 작물일지 생성',
-    description: '사용자의 새로운 작물일지를 생성합니다. 이미지를 첨부할 수 있습니다.',
+    description:
+      '사용자의 새로운 작물일지를 생성합니다. 이미지를 첨부할 수 있습니다.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -55,7 +56,10 @@ export class SchedulesController {
       type: 'object',
       properties: {
         title: { type: 'string', example: '토마토 씨앗 파종' },
-        content: { type: 'string', example: '오늘 토마토 씨앗을 파종했습니다.' },
+        content: {
+          type: 'string',
+          example: '오늘 토마토 씨앗을 파종했습니다.',
+        },
         date: { type: 'string', example: '2025-08-15' },
         cropId: { type: 'number', example: 1 },
         image: {
@@ -81,7 +85,11 @@ export class SchedulesController {
     @UploadedFile() file?: Express.Multer.File,
   ): Promise<ApiResponseDto<ScheduleResponseDto>> {
     const imageUrl = file ? `/uploads/logs/${file.filename}` : undefined;
-    const data = await this.schedulesService.create(createScheduleDto, userId, imageUrl);
+    const data = await this.schedulesService.create(
+      createScheduleDto,
+      userId,
+      imageUrl,
+    );
     return {
       success: true,
       message: '작물일지가 성공적으로 생성되었습니다.',
@@ -92,7 +100,8 @@ export class SchedulesController {
   @Get()
   @ApiOperation({
     summary: '작물일지 목록 조회',
-    description: '사용자의 모든 작물일지를 조회합니다. 특정 작물의 일지만 조회할 수도 있습니다.',
+    description:
+      '사용자의 모든 작물일지를 조회합니다. 특정 작물의 일지만 조회할 수도 있습니다.',
   })
   @ApiQuery({
     name: 'cropId',
@@ -203,7 +212,11 @@ export class SchedulesController {
     @Query('cropId') cropId?: string,
   ): Promise<ApiResponseDto<ScheduleListResponseDto>> {
     const parsedCropId = cropId ? parseInt(cropId, 10) : undefined;
-    const schedules = await this.schedulesService.findByDate(userId, date, parsedCropId);
+    const schedules = await this.schedulesService.findByDate(
+      userId,
+      date,
+      parsedCropId,
+    );
     return {
       success: true,
       message: '특정 날짜 작물일지를 성공적으로 조회했습니다.',
@@ -246,7 +259,8 @@ export class SchedulesController {
   @UseInterceptors(FileInterceptor('image', logImageMulterConfig))
   @ApiOperation({
     summary: '작물일지 수정',
-    description: '기존 작물일지의 정보를 수정합니다. 이미지를 새로 첨부할 수 있습니다.',
+    description:
+      '기존 작물일지의 정보를 수정합니다. 이미지를 새로 첨부할 수 있습니다.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -298,7 +312,6 @@ export class SchedulesController {
       data,
     };
   }
-
 
   @Delete(':id')
   @ApiOperation({

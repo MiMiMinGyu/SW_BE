@@ -5,8 +5,6 @@ import {
   HttpStatus,
   HttpCode,
   UseGuards,
-  Get,
-  Req,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
@@ -23,12 +21,7 @@ import {
   ApiErrorResponses,
 } from '../common/decorators/api-response.decorator';
 
-// 인증된 요청에서 사용자 정보 타입
-interface AuthenticatedRequest extends Request {
-  user: Omit<User, 'password'>;
-}
-
-@ApiTags('Auth')
+@ApiTags('1. Auth - 인증 관련 API')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -66,20 +59,6 @@ export class AuthController {
   @ApiErrorResponses()
   async login(@Body() loginUserDto: LoginUserDto): Promise<LoginResponseDto> {
     return this.authService.login(loginUserDto.email, loginUserDto.password);
-  }
-
-  @Get('me')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth()
-  @ApiSuccessResponse({
-    summary: '현재 사용자 정보 조회',
-    description:
-      'JWT 토큰을 사용하여 현재 로그인한 사용자의 정보를 조회합니다.',
-    type: UserResponseDto,
-  })
-  @ApiErrorResponses()
-  getCurrentUser(@Req() req: AuthenticatedRequest): Omit<User, 'password'> {
-    return req.user;
   }
 
   @Post('logout')

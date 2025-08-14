@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Repository, Between, FindOptionsWhere } from 'typeorm';
 import { Schedule } from './entities/schedule.entity';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
@@ -26,7 +26,9 @@ export class SchedulesService {
       where: { id: createScheduleDto.cropId, user: { id: userId } },
     });
     if (!crop) {
-      throw new NotFoundException(`ID ${createScheduleDto.cropId}번 작물을 찾을 수 없습니다.`);
+      throw new NotFoundException(
+        `ID ${createScheduleDto.cropId}번 작물을 찾을 수 없습니다.`,
+      );
     }
 
     const scheduleData = {
@@ -44,8 +46,11 @@ export class SchedulesService {
     return await this.findOneById(savedSchedule.id);
   }
 
-  async findAll(userId: number, cropId?: number): Promise<ScheduleResponseDto[]> {
-    const whereCondition: any = { user: { id: userId } };
+  async findAll(
+    userId: number,
+    cropId?: number,
+  ): Promise<ScheduleResponseDto[]> {
+    const whereCondition: FindOptionsWhere<Schedule> = { user: { id: userId } };
     if (cropId) {
       whereCondition.crop = { id: cropId };
     }
@@ -78,7 +83,7 @@ export class SchedulesService {
     endDate: string,
     cropId?: number,
   ): Promise<ScheduleResponseDto[]> {
-    const whereCondition: any = {
+    const whereCondition: FindOptionsWhere<Schedule> = {
       user: { id: userId },
       date: Between(new Date(startDate), new Date(endDate)),
     };
@@ -100,7 +105,7 @@ export class SchedulesService {
     date: string,
     cropId?: number,
   ): Promise<ScheduleResponseDto[]> {
-    const whereCondition: any = {
+    const whereCondition: FindOptionsWhere<Schedule> = {
       user: { id: userId },
       date: new Date(date),
     };
@@ -137,7 +142,9 @@ export class SchedulesService {
         where: { id: updateScheduleDto.cropId, user: { id: userId } },
       });
       if (!foundCrop) {
-        throw new NotFoundException(`ID ${updateScheduleDto.cropId}번 작물을 찾을 수 없습니다.`);
+        throw new NotFoundException(
+          `ID ${updateScheduleDto.cropId}번 작물을 찾을 수 없습니다.`,
+        );
       }
       crop = foundCrop;
     }
@@ -168,9 +175,10 @@ export class SchedulesService {
       id: schedule.id,
       title: schedule.title,
       content: schedule.content,
-      date: schedule.date instanceof Date 
-        ? schedule.date.toISOString().split('T')[0] 
-        : schedule.date, // YYYY-MM-DD format
+      date:
+        schedule.date instanceof Date
+          ? schedule.date.toISOString().split('T')[0]
+          : schedule.date, // YYYY-MM-DD format
       image: schedule.image,
       user: {
         id: schedule.user.id,

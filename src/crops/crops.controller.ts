@@ -31,7 +31,7 @@ interface AuthenticatedRequest extends Request {
   user: Omit<User, 'password'>;
 }
 
-@ApiTags('Crops')
+@ApiTags('6. Crop - 작물 관련 API')
 @ApiBearerAuth()
 @Controller('crops')
 @UseGuards(AuthGuard('jwt'))

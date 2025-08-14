@@ -2,6 +2,7 @@ import { User } from '../../users/entities/user.entity';
 import { Comment } from '../../comments/entities/comment.entity';
 import { PostLike } from './post-like.entity';
 import { PostTag } from './post-tag.entity';
+import { Reservation } from '../../reservations/entities/reservation.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -47,6 +48,23 @@ export class Post {
   @Column({ default: 0 })
   commentCount: number;
 
+  @Column({ type: 'decimal', precision: 10, scale: 0, nullable: true })
+  price: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  maxParticipants: number | null;
+
+  @Column({ type: 'int', default: 0 })
+  currentParticipants: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  scheduledDate: Date | null;
+
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  location: string | null;
+
+  @Column({ default: true })
+  isActive: boolean;
 
   @ManyToOne(() => User, (user) => user.posts, { onDelete: 'CASCADE' })
   user: User;
@@ -59,6 +77,11 @@ export class Post {
 
   @OneToMany(() => PostTag, (postTag) => postTag.post, { cascade: true })
   postTags: PostTag[];
+
+  @OneToMany(() => Reservation, (reservation) => reservation.post, {
+    cascade: true,
+  })
+  reservations: Reservation[];
 
   @CreateDateColumn()
   createdAt: Date;

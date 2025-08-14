@@ -4,7 +4,7 @@ import { TagsService } from './tags.service';
 import { Tag } from './entities/tag.entity';
 import { ApiResponseDto } from '../common/dto/api-response.dto';
 
-@ApiTags('태그')
+@ApiTags('8. Tag - 태그 관리')
 @Controller('tags')
 export class TagsController {
   constructor(private readonly tagsService: TagsService) {}
