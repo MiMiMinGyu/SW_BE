@@ -4,7 +4,7 @@ import { TagsService } from './tags.service';
 import { Tag } from './entities/tag.entity';
 import { ApiResponseDto } from '../common/dto/api-response.dto';
 
-@ApiTags('8. Tag - 태그 관리')
+@ApiTags('9. Tag - 태그 관리')
 @Controller('tags')
 export class TagsController {
   constructor(private readonly tagsService: TagsService) {}
@@ -52,9 +52,7 @@ export class TagsController {
     description: '태그 검색 성공',
     type: ApiResponseDto<Tag[]>,
   })
-  async search(
-    @Query('q') query: string,
-  ): Promise<ApiResponseDto<Tag[]>> {
+  async search(@Query('q') query: string): Promise<ApiResponseDto<Tag[]>> {
     const data = await this.tagsService.searchTags(query);
     return {
       success: true,

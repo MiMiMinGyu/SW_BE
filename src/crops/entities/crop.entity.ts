@@ -5,7 +5,6 @@ import {
   Column,
   CreateDateColumn,
   ManyToOne,
-  OneToMany,
 } from 'typeorm';
 
 @Entity()
