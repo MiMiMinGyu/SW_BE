@@ -59,7 +59,7 @@ export class CropsService {
             updatedAt: new Date(),
           },
       logCount: await this.schedulesRepository.count({
-        where: { crop: { id: crop.id } }
+        where: { crop: { id: crop.id } },
       }),
     };
     return result;
@@ -283,6 +283,50 @@ export class CropsService {
       throw new InternalServerErrorException(
         '작물 삭제 중 오류가 발생했습니다.',
       );
+    }
+  }
+
+  /**
+   * 사용자의 모든 작물명 조회 (NCPMS 연동용)
+   */
+  async getUserCropNames(userId: number): Promise<string[]> {
+    try {
+      const crops = await this.cropsRepository.find({
+        where: { user: { id: userId } },
+        select: ['name'],
+      });
+
+      return [...new Set(crops.map((crop) => crop.name))]; // 중복 제거
+    } catch (error) {
+      this.logger.error(`작물명 목록 조회 실패 (사용자: ${userId}):`, error);
+      return [];
+    }
+  }
+
+  /**
+   * 특정 작물명으로 사용자 작물 조회 (NCPMS 연동용)
+   */
+  async findByName(
+    userId: number,
+    cropName: string,
+  ): Promise<CropResponseDto[]> {
+    try {
+      const crops = await this.cropsRepository.find({
+        where: {
+          user: { id: userId },
+          name: cropName,
+        },
+        relations: ['user'],
+        order: { createdAt: 'DESC' },
+      });
+
+      return await Promise.all(crops.map((crop) => this.toSafeCrop(crop)));
+    } catch (error) {
+      this.logger.error(
+        `작물명별 조회 실패 (사용자: ${userId}, 작물: ${cropName}):`,
+        error,
+      );
+      return [];
     }
   }
 }

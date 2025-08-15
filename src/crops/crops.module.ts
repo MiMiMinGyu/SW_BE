@@ -9,5 +9,6 @@ import { Schedule } from '../schedules/entities/schedule.entity';
   imports: [TypeOrmModule.forFeature([Crop, Schedule])],
   controllers: [CropsController],
   providers: [CropsService],
+  exports: [CropsService], // NCPMS 모듈에서 사용할 수 있도록 export
 })
 export class CropsModule {}

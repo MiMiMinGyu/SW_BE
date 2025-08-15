@@ -93,7 +93,7 @@ export class PostsController {
   @ApiOperation({
     summary: '게시글 목록 조회',
     description: `게시글 목록을 조회합니다. 다양한 필터와 검색 옵션을 제공합니다.
-    
+
 📋 주요 기능:
 • 텍스트 검색: 제목/내용에서 키워드 검색
 • 카테고리 필터: 일반글/질문/일지/노하우/예약글 분류
