@@ -60,7 +60,7 @@ import { NcpmsModule } from './ncpms/ncpms.module';
     }),
 
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'uploads'),
+      rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
       serveStaticOptions: {
         maxAge: '1d', // 캐시 설정
