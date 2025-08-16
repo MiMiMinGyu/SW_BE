@@ -132,7 +132,7 @@ export class UsersController {
     }
 
     const { id } = req.user;
-    const imageUrl = `/uploads/${file.filename}`; // 상대 경로로 저장
+    const imageUrl = `/uploads/profiles/${file.filename}`; // 올바른 경로로 저장
 
     return this.usersService.uploadProfileImage(id, imageUrl);
   }
