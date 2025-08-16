@@ -10,6 +10,7 @@ import { Comment } from '../comments/entities/comment.entity';
 import { PostLike } from '../posts/entities/post-like.entity';
 import { Tag } from '../tags/entities/tag.entity';
 import { PostTag } from '../posts/entities/post-tag.entity';
+import { Reservation } from '../reservations/entities/reservation.entity';
 
 // 환경변수 로드
 config();
@@ -44,6 +45,7 @@ const AppDataSource = new DataSource({
     PostLike,
     Tag,
     PostTag,
+    Reservation,
     // 추가 경로 방식 (필요시 사용)
     // join(__dirname, '../**/*.entity{.ts,.js}')
   ],

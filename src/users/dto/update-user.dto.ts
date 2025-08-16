@@ -59,11 +59,11 @@ export class UpdateUserDto {
 
   @ApiPropertyOptional({
     enum: UserType,
-    example: UserType.PROFESSIONAL,
-    description: '사용자 유형 (HOBBY, PROFESSIONAL, ADMIN)',
+    example: UserType.EXPERT,
+    description: '사용자 유형 (HOBBY, EXPERT, ADMIN)',
   })
   @IsEnum(UserType, {
-    message: 'HOBBY, PROFESSIONAL, ADMIN 중에서 선택해야 합니다.',
+    message: 'HOBBY, EXPERT, ADMIN 중에서 선택해야 합니다.',
   })
   @IsOptional()
   userType?: UserType;

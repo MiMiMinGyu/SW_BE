@@ -1,5 +1,5 @@
 export enum UserType {
   HOBBY = 'HOBBY',
-  PROFESSIONAL = 'PROFESSIONAL',
+  EXPERT = 'EXPERT',
   ADMIN = 'ADMIN',
 }

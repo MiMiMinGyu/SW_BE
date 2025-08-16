@@ -59,7 +59,7 @@ export class CreateUserDto {
   @ApiProperty({
     enum: UserType,
     example: UserType.HOBBY,
-    description: '사용자 유형 (HOBBY, PROFESSIONAL, ADMIN)',
+    description: '사용자 유형 (HOBBY, EXPERT, ADMIN)',
     required: false,
   })
   @IsEnum(UserType, {
