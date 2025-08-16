@@ -32,7 +32,6 @@ import {
 } from './dto/schedule-response.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../common/decorators/get-user.decorator';
-import { ApiResponseDto } from '../common/dto/api-response.dto';
 import { logImageMulterConfig } from '../common/config/multer.config';
 
 @ApiTags('7. Schedule - 작물일지 관리')
@@ -74,7 +73,7 @@ export class SchedulesController {
   @ApiResponse({
     status: 201,
     description: '작물일지가 성공적으로 생성되었습니다.',
-    type: ApiResponseDto<ScheduleResponseDto>,
+    type: ScheduleResponseDto,
   })
   @ApiResponse({ status: 400, description: '잘못된 요청 데이터' })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
@@ -83,18 +82,9 @@ export class SchedulesController {
     @Body() createScheduleDto: CreateScheduleDto,
     @GetUser('id') userId: number,
     @UploadedFile() file?: Express.Multer.File,
-  ): Promise<ApiResponseDto<ScheduleResponseDto>> {
+  ): Promise<ScheduleResponseDto> {
     const imageUrl = file ? `/uploads/logs/${file.filename}` : undefined;
-    const data = await this.schedulesService.create(
-      createScheduleDto,
-      userId,
-      imageUrl,
-    );
-    return {
-      success: true,
-      message: '작물일지가 성공적으로 생성되었습니다.',
-      data,
-    };
+    return this.schedulesService.create(createScheduleDto, userId, imageUrl);
   }
 
   @Get()
@@ -112,22 +102,18 @@ export class SchedulesController {
   @ApiResponse({
     status: 200,
     description: '작물일지 목록 조회 성공',
-    type: ApiResponseDto<ScheduleListResponseDto>,
+    type: ScheduleListResponseDto,
   })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
   async findAll(
     @GetUser('id') userId: number,
     @Query('cropId') cropId?: string,
-  ): Promise<ApiResponseDto<ScheduleListResponseDto>> {
+  ): Promise<ScheduleListResponseDto> {
     const parsedCropId = cropId ? parseInt(cropId, 10) : undefined;
     const schedules = await this.schedulesService.findAll(userId, parsedCropId);
     return {
-      success: true,
-      message: '작물일지 목록을 성공적으로 조회했습니다.',
-      data: {
-        schedules,
-        total: schedules.length,
-      },
+      schedules,
+      total: schedules.length,
     };
   }
 
@@ -156,7 +142,7 @@ export class SchedulesController {
   @ApiResponse({
     status: 200,
     description: '날짜 범위 작물일지 조회 성공',
-    type: ApiResponseDto<ScheduleListResponseDto>,
+    type: ScheduleListResponseDto,
   })
   @ApiResponse({ status: 400, description: '잘못된 날짜 형식' })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
@@ -165,7 +151,7 @@ export class SchedulesController {
     @Query('endDate') endDate: string,
     @GetUser('id') userId: number,
     @Query('cropId') cropId?: string,
-  ): Promise<ApiResponseDto<ScheduleListResponseDto>> {
+  ): Promise<ScheduleListResponseDto> {
     const parsedCropId = cropId ? parseInt(cropId, 10) : undefined;
     const schedules = await this.schedulesService.findByDateRange(
       userId,
@@ -174,12 +160,8 @@ export class SchedulesController {
       parsedCropId,
     );
     return {
-      success: true,
-      message: '날짜 범위 작물일지를 성공적으로 조회했습니다.',
-      data: {
-        schedules,
-        total: schedules.length,
-      },
+      schedules,
+      total: schedules.length,
     };
   }
 
@@ -202,7 +184,7 @@ export class SchedulesController {
   @ApiResponse({
     status: 200,
     description: '특정 날짜 작물일지 조회 성공',
-    type: ApiResponseDto<ScheduleListResponseDto>,
+    type: ScheduleListResponseDto,
   })
   @ApiResponse({ status: 400, description: '잘못된 날짜 형식' })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
@@ -210,7 +192,7 @@ export class SchedulesController {
     @Param('date') date: string,
     @GetUser('id') userId: number,
     @Query('cropId') cropId?: string,
-  ): Promise<ApiResponseDto<ScheduleListResponseDto>> {
+  ): Promise<ScheduleListResponseDto> {
     const parsedCropId = cropId ? parseInt(cropId, 10) : undefined;
     const schedules = await this.schedulesService.findByDate(
       userId,
@@ -218,12 +200,8 @@ export class SchedulesController {
       parsedCropId,
     );
     return {
-      success: true,
-      message: '특정 날짜 작물일지를 성공적으로 조회했습니다.',
-      data: {
-        schedules,
-        total: schedules.length,
-      },
+      schedules,
+      total: schedules.length,
     };
   }
 
@@ -240,19 +218,14 @@ export class SchedulesController {
   @ApiResponse({
     status: 200,
     description: '작물일지 조회 성공',
-    type: ApiResponseDto<ScheduleResponseDto>,
+    type: ScheduleResponseDto,
   })
   @ApiResponse({ status: 404, description: '작물일지를 찾을 수 없음' })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<ApiResponseDto<ScheduleResponseDto>> {
-    const data = await this.schedulesService.findOneById(id);
-    return {
-      success: true,
-      message: '작물일지를 성공적으로 조회했습니다.',
-      data,
-    };
+  ): Promise<ScheduleResponseDto> {
+    return this.schedulesService.findOneById(id);
   }
 
   @Patch(':id')
@@ -288,7 +261,7 @@ export class SchedulesController {
   @ApiResponse({
     status: 200,
     description: '작물일지 수정 성공',
-    type: ApiResponseDto<ScheduleResponseDto>,
+    type: ScheduleResponseDto,
   })
   @ApiResponse({ status: 400, description: '잘못된 요청 데이터' })
   @ApiResponse({ status: 404, description: '작물일지를 찾을 수 없음' })
@@ -298,19 +271,14 @@ export class SchedulesController {
     @Body() updateScheduleDto: UpdateScheduleDto,
     @GetUser('id') userId: number,
     @UploadedFile() file?: Express.Multer.File,
-  ): Promise<ApiResponseDto<ScheduleResponseDto>> {
+  ): Promise<ScheduleResponseDto> {
     const imageUrl = file ? `/uploads/logs/${file.filename}` : undefined;
-    const data = await this.schedulesService.update(
+    return this.schedulesService.update(
       id,
       updateScheduleDto,
       userId,
       imageUrl,
     );
-    return {
-      success: true,
-      message: '작물일지가 성공적으로 수정되었습니다.',
-      data,
-    };
   }
 
   @Delete(':id')
@@ -326,19 +294,15 @@ export class SchedulesController {
   @ApiResponse({
     status: 200,
     description: '작물일지 삭제 성공',
-    type: ApiResponseDto<null>,
+    type: Object,
   })
   @ApiResponse({ status: 404, description: '작물일지를 찾을 수 없음' })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
   async remove(
     @Param('id', ParseIntPipe) id: number,
     @GetUser('id') userId: number,
-  ): Promise<ApiResponseDto<null>> {
+  ): Promise<null> {
     await this.schedulesService.remove(id, userId);
-    return {
-      success: true,
-      message: '작물일지가 성공적으로 삭제되었습니다.',
-      data: null,
-    };
+    return null;
   }
 }

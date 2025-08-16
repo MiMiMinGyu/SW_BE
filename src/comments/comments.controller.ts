@@ -20,9 +20,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { CommentResponseDto, CommentListResponseDto } from './dto/comment-response.dto';
+import {
+  CommentResponseDto,
+  CommentListResponseDto,
+} from './dto/comment-response.dto';
 import { GetUser } from '../common/decorators/get-user.decorator';
-import { ApiResponseDto } from '../common/dto/api-response.dto';
 
 @ApiTags('5. Comment - 댓글 관리')
 @Controller('posts/:postId/comments')
@@ -44,7 +46,7 @@ export class CommentsController {
   @ApiResponse({
     status: 201,
     description: '댓글이 성공적으로 작성되었습니다.',
-    type: ApiResponseDto<CommentResponseDto>,
+    type: CommentResponseDto,
   })
   @ApiResponse({ status: 400, description: '잘못된 요청 데이터' })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
@@ -53,13 +55,8 @@ export class CommentsController {
     @Param('postId', ParseIntPipe) postId: number,
     @Body() createCommentDto: CreateCommentDto,
     @GetUser('id') userId: number,
-  ): Promise<ApiResponseDto<CommentResponseDto>> {
-    const data = await this.commentsService.create(postId, createCommentDto, userId);
-    return {
-      success: true,
-      message: '댓글이 성공적으로 작성되었습니다.',
-      data,
-    };
+  ): Promise<CommentResponseDto> {
+    return this.commentsService.create(postId, createCommentDto, userId);
   }
 
   @Get()
@@ -75,18 +72,13 @@ export class CommentsController {
   @ApiResponse({
     status: 200,
     description: '댓글 목록 조회 성공',
-    type: ApiResponseDto<CommentListResponseDto>,
+    type: CommentListResponseDto,
   })
   @ApiResponse({ status: 404, description: '게시글을 찾을 수 없음' })
   async findByPostId(
     @Param('postId', ParseIntPipe) postId: number,
-  ): Promise<ApiResponseDto<CommentListResponseDto>> {
-    const data = await this.commentsService.findByPostId(postId);
-    return {
-      success: true,
-      message: '댓글 목록을 성공적으로 조회했습니다.',
-      data,
-    };
+  ): Promise<CommentListResponseDto> {
+    return this.commentsService.findByPostId(postId);
   }
 }
 
@@ -108,18 +100,13 @@ export class CommentManagementController {
   @ApiResponse({
     status: 200,
     description: '댓글 조회 성공',
-    type: ApiResponseDto<CommentResponseDto>,
+    type: CommentResponseDto,
   })
   @ApiResponse({ status: 404, description: '댓글을 찾을 수 없음' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<ApiResponseDto<CommentResponseDto>> {
-    const data = await this.commentsService.findOneById(id);
-    return {
-      success: true,
-      message: '댓글을 성공적으로 조회했습니다.',
-      data,
-    };
+  ): Promise<CommentResponseDto> {
+    return this.commentsService.findOneById(id);
   }
 
   @Patch(':id')
@@ -137,7 +124,7 @@ export class CommentManagementController {
   @ApiResponse({
     status: 200,
     description: '댓글 수정 성공',
-    type: ApiResponseDto<CommentResponseDto>,
+    type: CommentResponseDto,
   })
   @ApiResponse({ status: 400, description: '잘못된 요청 데이터' })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
@@ -147,13 +134,8 @@ export class CommentManagementController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCommentDto: UpdateCommentDto,
     @GetUser('id') userId: number,
-  ): Promise<ApiResponseDto<CommentResponseDto>> {
-    const data = await this.commentsService.update(id, updateCommentDto, userId);
-    return {
-      success: true,
-      message: '댓글이 성공적으로 수정되었습니다.',
-      data,
-    };
+  ): Promise<CommentResponseDto> {
+    return this.commentsService.update(id, updateCommentDto, userId);
   }
 
   @Delete(':id')
@@ -171,7 +153,7 @@ export class CommentManagementController {
   @ApiResponse({
     status: 200,
     description: '댓글 삭제 성공',
-    type: ApiResponseDto<null>,
+    type: Object,
   })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
   @ApiResponse({ status: 403, description: '삭제 권한 없음' })
@@ -179,12 +161,8 @@ export class CommentManagementController {
   async remove(
     @Param('id', ParseIntPipe) id: number,
     @GetUser('id') userId: number,
-  ): Promise<ApiResponseDto<null>> {
+  ): Promise<null> {
     await this.commentsService.remove(id, userId);
-    return {
-      success: true,
-      message: '댓글이 성공적으로 삭제되었습니다.',
-      data: null,
-    };
+    return null;
   }
 }

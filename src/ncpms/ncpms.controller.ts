@@ -10,7 +10,6 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { NcpmsService } from './ncpms.service';
 import { DiseaseSearchDto, PestSearchDto } from './dto/disease-search.dto';
-import { ApiResponseDto } from '../common/dto/api-response.dto';
 import {
   ProcessedDiseaseInfo,
   ProcessedPestInfo,
@@ -71,19 +70,14 @@ export class NcpmsController {
   @ApiResponse({
     status: 200,
     description: '병 정보 검색 성공',
-    type: ApiResponseDto<ProcessedDiseaseInfo[]>,
+    type: 'array',
   })
   @ApiResponse({ status: 400, description: '잘못된 요청 파라미터' })
   @ApiResponse({ status: 500, description: 'NCPMS API 연동 오류' })
   async searchDiseases(
     @Query() searchDto: DiseaseSearchDto,
-  ): Promise<ApiResponseDto<ProcessedDiseaseInfo[]>> {
-    const data = await this.ncpmsService.searchDiseases(searchDto);
-    return {
-      success: true,
-      message: `병 정보를 성공적으로 조회했습니다. (총 ${data.length}건)`,
-      data,
-    };
+  ): Promise<ProcessedDiseaseInfo[]> {
+    return this.ncpmsService.searchDiseases(searchDto);
   }
 
   @Get('pests/search')
@@ -131,19 +125,14 @@ export class NcpmsController {
   @ApiResponse({
     status: 200,
     description: '해충 정보 검색 성공',
-    type: ApiResponseDto<ProcessedPestInfo[]>,
+    type: 'array',
   })
   @ApiResponse({ status: 400, description: '잘못된 요청 파라미터' })
   @ApiResponse({ status: 500, description: 'NCPMS API 연동 오류' })
   async searchPests(
     @Query() searchDto: PestSearchDto,
-  ): Promise<ApiResponseDto<ProcessedPestInfo[]>> {
-    const data = await this.ncpmsService.searchPests(searchDto);
-    return {
-      success: true,
-      message: `해충 정보를 성공적으로 조회했습니다. (총 ${data.length}건)`,
-      data,
-    };
+  ): Promise<ProcessedPestInfo[]> {
+    return this.ncpmsService.searchPests(searchDto);
   }
 
   @Get('crops/:cropName/health-info')
@@ -196,18 +185,11 @@ export class NcpmsController {
   })
   @ApiResponse({ status: 400, description: '잘못된 작물명' })
   @ApiResponse({ status: 500, description: 'NCPMS API 연동 오류' })
-  async getCropHealthInfo(@Param('cropName') cropName: string): Promise<
-    ApiResponseDto<{
-      diseases: ProcessedDiseaseInfo[];
-      pests: ProcessedPestInfo[];
-    }>
-  > {
-    const data = await this.ncpmsService.getCropHealthInfo(cropName);
-    return {
-      success: true,
-      message: `${cropName} 병해충 종합 정보를 조회했습니다. (병 ${data.diseases.length}건, 해충 ${data.pests.length}건)`,
-      data,
-    };
+  async getCropHealthInfo(@Param('cropName') cropName: string): Promise<{
+    diseases: ProcessedDiseaseInfo[];
+    pests: ProcessedPestInfo[];
+  }> {
+    return this.ncpmsService.getCropHealthInfo(cropName);
   }
 
   @Get('my-crops/health-recommendations')
@@ -271,21 +253,17 @@ export class NcpmsController {
   @ApiResponse({ status: 404, description: '등록된 작물이 없음' })
   async getMyHealthRecommendations(
     @GetUser('id') userId: number,
-  ): Promise<ApiResponseDto<any>> {
+  ): Promise<any> {
     // 사용자가 등록한 작물 목록 조회
     const cropNames = await this.cropsService.getUserCropNames(userId);
 
     if (cropNames.length === 0) {
       return {
-        success: true,
-        message: '등록된 작물이 없습니다. 작물을 등록한 후 다시 시도해주세요.',
-        data: {
-          cropHealthInfo: [],
-          summary: {
-            totalCrops: 0,
-            totalDiseases: 0,
-            totalPests: 0,
-          },
+        cropHealthInfo: [],
+        summary: {
+          totalCrops: 0,
+          totalDiseases: 0,
+          totalPests: 0,
         },
       };
     }
@@ -320,12 +298,8 @@ export class NcpmsController {
     };
 
     return {
-      success: true,
-      message: `등록된 ${summary.totalCrops}개 작물의 병해충 정보를 조회했습니다. (병 ${summary.totalDiseases}건, 해충 ${summary.totalPests}건)`,
-      data: {
-        cropHealthInfo,
-        summary,
-      },
+      cropHealthInfo,
+      summary,
     };
   }
 }
