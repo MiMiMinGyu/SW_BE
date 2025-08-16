@@ -25,7 +25,6 @@ import { CreateReservationPostDto } from './dto/create-reservation-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostResponseDto, PostListResponseDto } from './dto/post-response.dto';
 import { GetUser } from '../common/decorators/get-user.decorator';
-import { ApiResponseDto } from '../common/dto/api-response.dto';
 import { PostCategory } from './enums/post-category.enum';
 
 @ApiTags('3. Post - 게시글 관리')
@@ -43,20 +42,15 @@ export class PostsController {
   @ApiResponse({
     status: 201,
     description: '게시글이 성공적으로 작성되었습니다.',
-    type: ApiResponseDto<PostResponseDto>,
+    type: PostResponseDto,
   })
   @ApiResponse({ status: 400, description: '잘못된 요청 데이터' })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
   async create(
     @Body() createPostDto: CreatePostDto,
     @GetUser('id') userId: number,
-  ): Promise<ApiResponseDto<PostResponseDto>> {
-    const data = await this.postsService.create(createPostDto, userId);
-    return {
-      success: true,
-      message: '게시글이 성공적으로 작성되었습니다.',
-      data,
-    };
+  ): Promise<PostResponseDto> {
+    return this.postsService.create(createPostDto, userId);
   }
 
   @Post('reservation')
@@ -69,7 +63,7 @@ export class PostsController {
   @ApiResponse({
     status: 201,
     description: '예약 게시글이 성공적으로 작성되었습니다.',
-    type: ApiResponseDto<PostResponseDto>,
+    type: PostResponseDto,
   })
   @ApiResponse({ status: 400, description: '잘못된 요청 데이터' })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
@@ -77,16 +71,11 @@ export class PostsController {
   async createReservationPost(
     @Body() createReservationPostDto: CreateReservationPostDto,
     @GetUser('id') userId: number,
-  ): Promise<ApiResponseDto<PostResponseDto>> {
-    const data = await this.postsService.createReservationPost(
+  ): Promise<PostResponseDto> {
+    return this.postsService.createReservationPost(
       createReservationPostDto,
       userId,
     );
-    return {
-      success: true,
-      message: '예약 게시글이 성공적으로 작성되었습니다.',
-      data,
-    };
   }
 
   @Get()
@@ -146,7 +135,7 @@ export class PostsController {
   @ApiResponse({
     status: 200,
     description: '게시글 목록 조회 성공',
-    type: ApiResponseDto<PostListResponseDto>,
+    type: PostListResponseDto,
   })
   async findAll(
     @Query('category') category?: PostCategory,
@@ -156,7 +145,7 @@ export class PostsController {
     @Query('limit') limit?: string,
     @Query('sortBy') sortBy?: 'latest' | 'popular' | 'views',
     @GetUser('id') userId?: number,
-  ): Promise<ApiResponseDto<PostListResponseDto>> {
+  ): Promise<PostListResponseDto> {
     const options: PostQueryOptions = {
       category,
       search,
@@ -167,12 +156,7 @@ export class PostsController {
       userId,
     };
 
-    const data = await this.postsService.findAll(options);
-    return {
-      success: true,
-      message: '게시글 목록을 성공적으로 조회했습니다.',
-      data,
-    };
+    return this.postsService.findAll(options);
   }
 
   @Get(':id')
@@ -188,19 +172,14 @@ export class PostsController {
   @ApiResponse({
     status: 200,
     description: '게시글 조회 성공',
-    type: ApiResponseDto<PostResponseDto>,
+    type: PostResponseDto,
   })
   @ApiResponse({ status: 404, description: '게시글을 찾을 수 없음' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @GetUser('id') userId?: number,
-  ): Promise<ApiResponseDto<PostResponseDto>> {
-    const data = await this.postsService.findOneById(id, userId);
-    return {
-      success: true,
-      message: '게시글을 성공적으로 조회했습니다.',
-      data,
-    };
+  ): Promise<PostResponseDto> {
+    return this.postsService.findOneById(id, userId);
   }
 
   @Patch(':id')
@@ -218,7 +197,7 @@ export class PostsController {
   @ApiResponse({
     status: 200,
     description: '게시글 수정 성공',
-    type: ApiResponseDto<PostResponseDto>,
+    type: PostResponseDto,
   })
   @ApiResponse({ status: 400, description: '잘못된 요청 데이터' })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
@@ -228,13 +207,8 @@ export class PostsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updatePostDto: UpdatePostDto,
     @GetUser('id') userId: number,
-  ): Promise<ApiResponseDto<PostResponseDto>> {
-    const data = await this.postsService.update(id, updatePostDto, userId);
-    return {
-      success: true,
-      message: '게시글이 성공적으로 수정되었습니다.',
-      data,
-    };
+  ): Promise<PostResponseDto> {
+    return this.postsService.update(id, updatePostDto, userId);
   }
 
   @Delete(':id')
@@ -252,7 +226,7 @@ export class PostsController {
   @ApiResponse({
     status: 200,
     description: '게시글 삭제 성공',
-    type: ApiResponseDto<null>,
+    type: Object,
   })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
   @ApiResponse({ status: 403, description: '삭제 권한 없음' })
@@ -260,13 +234,9 @@ export class PostsController {
   async remove(
     @Param('id', ParseIntPipe) id: number,
     @GetUser('id') userId: number,
-  ): Promise<ApiResponseDto<null>> {
+  ): Promise<null> {
     await this.postsService.remove(id, userId);
-    return {
-      success: true,
-      message: '게시글이 성공적으로 삭제되었습니다.',
-      data: null,
-    };
+    return null;
   }
 
   @Get(':id/like')
@@ -344,19 +314,14 @@ export class PostsController {
   @ApiResponse({
     status: 200,
     description: '좋아요 상태 변경 성공',
-    type: ApiResponseDto<PostResponseDto>,
+    type: PostResponseDto,
   })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
   @ApiResponse({ status: 404, description: '게시글을 찾을 수 없음' })
   async toggleLike(
     @Param('id', ParseIntPipe) id: number,
     @GetUser('id') userId: number,
-  ): Promise<ApiResponseDto<PostResponseDto>> {
-    const data = await this.postsService.toggleLike(id, userId);
-    return {
-      success: true,
-      message: '좋아요 상태가 변경되었습니다.',
-      data,
-    };
+  ): Promise<PostResponseDto> {
+    return this.postsService.toggleLike(id, userId);
   }
 }

@@ -2,7 +2,6 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { TagsService } from './tags.service';
 import { Tag } from './entities/tag.entity';
-import { ApiResponseDto } from '../common/dto/api-response.dto';
 
 @ApiTags('9. Tag - 태그 관리')
 @Controller('tags')
@@ -23,18 +22,11 @@ export class TagsController {
   @ApiResponse({
     status: 200,
     description: '인기 태그 조회 성공',
-    type: ApiResponseDto<Tag[]>,
+    type: [Tag],
   })
-  async findPopular(
-    @Query('limit') limit?: string,
-  ): Promise<ApiResponseDto<Tag[]>> {
+  async findPopular(@Query('limit') limit?: string): Promise<Tag[]> {
     const limitNumber = limit ? parseInt(limit, 10) : 10;
-    const data = await this.tagsService.findPopularTags(limitNumber);
-    return {
-      success: true,
-      message: '인기 태그를 성공적으로 조회했습니다.',
-      data,
-    };
+    return this.tagsService.findPopularTags(limitNumber);
   }
 
   @Get('search')
@@ -50,14 +42,9 @@ export class TagsController {
   @ApiResponse({
     status: 200,
     description: '태그 검색 성공',
-    type: ApiResponseDto<Tag[]>,
+    type: [Tag],
   })
-  async search(@Query('q') query: string): Promise<ApiResponseDto<Tag[]>> {
-    const data = await this.tagsService.searchTags(query);
-    return {
-      success: true,
-      message: '태그 검색을 성공적으로 완료했습니다.',
-      data,
-    };
+  async search(@Query('q') query: string): Promise<Tag[]> {
+    return this.tagsService.searchTags(query);
   }
 }
