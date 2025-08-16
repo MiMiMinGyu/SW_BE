@@ -69,7 +69,7 @@ export class PostsService {
   ): Promise<PostResponseDto> {
     const user = await this.getUserById(userId);
 
-    if (user.userType !== UserType.PROFESSIONAL) {
+    if (user.userType !== UserType.EXPERT) {
       throw new ForbiddenException(
         '전문농업인만 예약 게시글을 작성할 수 있습니다.',
       );
@@ -248,6 +248,33 @@ export class PostsService {
     }
 
     return await this.findOneById(postId, userId);
+  }
+
+  async getLikeStatus(
+    postId: number,
+    userId: number,
+  ): Promise<{
+    likeCount: number;
+    isLiked: boolean;
+  }> {
+    const post = await this.postsRepository.findOne({
+      where: { id: postId },
+      select: ['id', 'likeCount'],
+    });
+
+    if (!post) {
+      throw new NotFoundException(`ID ${postId}번 게시글을 찾을 수 없습니다.`);
+    }
+
+    const like = await this.postLikesRepository.findOne({
+      where: { post: { id: postId }, user: { id: userId } },
+    });
+    const isLiked = !!like;
+
+    return {
+      likeCount: post.likeCount,
+      isLiked,
+    };
   }
 
   private buildBaseQuery(): SelectQueryBuilder<Post> {

@@ -55,12 +55,17 @@ export class ReservationsController {
     @Param('postId', ParseIntPipe) postId: number,
     @Body() createReservationDto: CreateReservationDto,
     @GetUser('id') userId: number,
-  ) {
-    return await this.reservationsService.create(
+  ): Promise<ApiResponseDto<Reservation>> {
+    const data = await this.reservationsService.create(
       postId,
       userId,
       createReservationDto,
     );
+    return {
+      success: true,
+      message: '예약 신청이 성공적으로 완료되었습니다.',
+      data,
+    };
   }
 
   @Get('my')
@@ -74,8 +79,15 @@ export class ReservationsController {
     type: ApiResponseDto<Reservation[]>,
   })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
-  async findMyReservations(@GetUser('id') userId: number) {
-    return await this.reservationsService.findMyReservations(userId);
+  async findMyReservations(
+    @GetUser('id') userId: number,
+  ): Promise<ApiResponseDto<Reservation[]>> {
+    const data = await this.reservationsService.findMyReservations(userId);
+    return {
+      success: true,
+      message: '예약 목록을 성공적으로 조회했습니다.',
+      data,
+    };
   }
 
   @Get('received')
@@ -89,8 +101,16 @@ export class ReservationsController {
     type: ApiResponseDto<Reservation[]>,
   })
   @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
-  async findReceivedReservations(@GetUser('id') userId: number) {
-    return await this.reservationsService.findReceivedReservations(userId);
+  async findReceivedReservations(
+    @GetUser('id') userId: number,
+  ): Promise<ApiResponseDto<Reservation[]>> {
+    const data =
+      await this.reservationsService.findReceivedReservations(userId);
+    return {
+      success: true,
+      message: '받은 예약 목록을 성공적으로 조회했습니다.',
+      data,
+    };
   }
 
   @Patch(':id/status')
@@ -117,12 +137,17 @@ export class ReservationsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateReservationStatusDto: UpdateReservationStatusDto,
     @GetUser('id') userId: number,
-  ) {
-    return await this.reservationsService.updateStatus(
+  ): Promise<ApiResponseDto<Reservation>> {
+    const data = await this.reservationsService.updateStatus(
       id,
       userId,
       updateReservationStatusDto,
     );
+    return {
+      success: true,
+      message: '예약 상태가 성공적으로 변경되었습니다.',
+      data,
+    };
   }
 
   @Patch(':id/cancel')
@@ -148,7 +173,16 @@ export class ReservationsController {
     @Param('id', ParseIntPipe) id: number,
     @Body('cancelReason') cancelReason: string,
     @GetUser('id') userId: number,
-  ) {
-    return await this.reservationsService.cancel(id, userId, cancelReason);
+  ): Promise<ApiResponseDto<Reservation>> {
+    const data = await this.reservationsService.cancel(
+      id,
+      userId,
+      cancelReason,
+    );
+    return {
+      success: true,
+      message: '예약이 성공적으로 취소되었습니다.',
+      data,
+    };
   }
 }

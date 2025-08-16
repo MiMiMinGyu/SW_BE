@@ -269,6 +269,66 @@ export class PostsController {
     };
   }
 
+  @Get(':id/like')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({
+    summary: '게시글 좋아요 상태 조회',
+    description: `게시글의 좋아요 수와 현재 사용자의 좋아요 여부를 조회합니다.
+
+📊 반환 정보:
+• likeCount: 총 좋아요 수
+• isLiked: 현재 사용자의 좋아요 여부 (로그인 필수)
+
+💡 활용 예시:
+• 게시글 목록에서 좋아요 수 표시
+• 좋아요 버튼 상태 (빨간색/회색) 결정
+• 실시간 좋아요 카운트 업데이트`,
+  })
+  @ApiParam({
+    name: 'id',
+    description: '조회할 게시글 ID',
+    example: 1,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '좋아요 상태 조회 성공',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: {
+          type: 'string',
+          example: '좋아요 상태를 조회했습니다.',
+        },
+        data: {
+          type: 'object',
+          properties: {
+            likeCount: {
+              type: 'number',
+              example: 15,
+              description: '총 좋아요 수',
+            },
+            isLiked: {
+              type: 'boolean',
+              example: true,
+              description:
+                '현재 사용자의 좋아요 여부 (로그인 시에만 true/false, 비로그인 시 false)',
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: '인증되지 않은 사용자' })
+  @ApiResponse({ status: 404, description: '게시글을 찾을 수 없음' })
+  async getLikeStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser('id') userId: number,
+  ): Promise<{ likeCount: number; isLiked: boolean }> {
+    return await this.postsService.getLikeStatus(id, userId);
+  }
+
   @Post(':id/like')
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))

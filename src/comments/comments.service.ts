@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Comment } from './entities/comment.entity';
@@ -6,7 +10,10 @@ import { Post } from '../posts/entities/post.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { CommentResponseDto, CommentListResponseDto } from './dto/comment-response.dto';
+import {
+  CommentResponseDto,
+  CommentListResponseDto,
+} from './dto/comment-response.dto';
 
 @Injectable()
 export class CommentsService {
@@ -57,7 +64,9 @@ export class CommentsService {
       .orderBy('comment.createdAt', 'DESC')
       .getManyAndCount();
 
-    const commentResponses = comments.map(comment => this.transformToResponseDto(comment));
+    const commentResponses = comments.map((comment) =>
+      this.transformToResponseDto(comment),
+    );
 
     return {
       comments: commentResponses,
@@ -118,7 +127,11 @@ export class CommentsService {
     }
 
     // 게시글의 댓글 수 감소
-    await this.postsRepository.decrement({ id: comment.post.id }, 'commentCount', 1);
+    await this.postsRepository.decrement(
+      { id: comment.post.id },
+      'commentCount',
+      1,
+    );
 
     await this.commentsRepository.remove(comment);
   }
