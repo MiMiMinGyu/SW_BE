@@ -11,11 +11,15 @@ export class CommentResponseDto {
   @ApiProperty({ example: 5, description: '댓글 좋아요 수' })
   likeCount: number;
 
+  @ApiProperty({ example: false, description: '익명 댓글 여부' })
+  isAnonymous: boolean;
+
   @ApiProperty({
     type: UserResponseDto,
-    description: '댓글 작성자 정보',
+    description: '댓글 작성자 정보 (익명인 경우 닉네임만 "익명"으로 표시)',
+    required: false,
   })
-  user: UserResponseDto;
+  user: UserResponseDto | null;
 
   @ApiProperty({ example: '2025-08-12T10:30:00.000Z', description: '댓글 생성일' })
   createdAt: Date;

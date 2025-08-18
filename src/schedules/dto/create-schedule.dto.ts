@@ -4,9 +4,12 @@ import {
   IsOptional,
   IsDateString,
   IsNumber,
+  IsEnum,
   MaxLength,
   MinLength,
+  Matches,
 } from 'class-validator';
+import { ScheduleType } from '../entities/schedule.entity';
 
 export class CreateScheduleDto {
   @ApiProperty({
@@ -40,11 +43,35 @@ export class CreateScheduleDto {
   date: string;
 
   @ApiProperty({
+    enum: ScheduleType,
+    example: ScheduleType.CROP_DIARY,
+    description: '일정 유형 (crop_diary: 작물 일지, personal: 개인 일정)',
+    default: ScheduleType.CROP_DIARY,
+  })
+  @IsEnum(ScheduleType, { message: '올바른 일정 유형을 선택해주세요.' })
+  @IsOptional()
+  type?: ScheduleType;
+
+  @ApiProperty({
     example: 1,
-    description: '작물 ID (필수)',
+    description: '작물 ID (개인 일정인 경우 생략 가능)',
+    required: false,
   })
   @IsNumber({}, { message: '작물 ID는 숫자여야 합니다.' })
-  cropId: number;
+  @IsOptional()
+  cropId?: number;
+
+  @ApiProperty({
+    example: '#4CAF50',
+    description: '캘린더 표시 색상 (HEX 코드, 선택사항)',
+    required: false,
+  })
+  @IsOptional()
+  @IsString({ message: '색상은 문자열이어야 합니다.' })
+  @Matches(/^#[0-9A-Fa-f]{6}$/, {
+    message: '올바른 HEX 색상 코드를 입력해주세요. (예: #4CAF50)',
+  })
+  color?: string;
 
   @ApiProperty({
     type: 'string',

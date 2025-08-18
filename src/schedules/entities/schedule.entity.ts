@@ -10,6 +10,11 @@ import {
   Index,
 } from 'typeorm';
 
+export enum ScheduleType {
+  CROP_DIARY = 'crop_diary',
+  PERSONAL = 'personal',
+}
+
 @Entity({ name: 'schedules' })
 @Index(['user', 'date']) // 사용자별 날짜 검색 최적화
 export class Schedule {
@@ -28,15 +33,31 @@ export class Schedule {
   @Column({ type: 'varchar', nullable: true, comment: '첨부 이미지 경로' })
   image: string | null;
 
+  @Column({
+    type: 'varchar',
+    length: 7,
+    nullable: true,
+    comment: '캘린더 표시 색상 (HEX)',
+  })
+  color: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: ScheduleType,
+    default: ScheduleType.CROP_DIARY,
+    comment: '일정 유형 (작물 일지 또는 개인 일정)',
+  })
+  type: ScheduleType;
+
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   user: User;
 
   @ManyToOne(() => Crop, {
     onDelete: 'CASCADE',
-    nullable: false,
+    nullable: true, // 개인 일정은 null 가능
     eager: false,
   })
-  crop: Crop;
+  crop: Crop | null;
 
   @CreateDateColumn()
   createdAt: Date;

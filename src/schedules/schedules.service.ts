@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, FindOptionsWhere } from 'typeorm';
-import { Schedule } from './entities/schedule.entity';
+import { Schedule, ScheduleType } from './entities/schedule.entity';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { ScheduleResponseDto } from './dto/schedule-response.dto';
@@ -22,13 +26,24 @@ export class SchedulesService {
     userId: number,
     imageUrl?: string,
   ): Promise<ScheduleResponseDto> {
-    const crop = await this.cropsRepository.findOne({
-      where: { id: createScheduleDto.cropId, user: { id: userId } },
-    });
-    if (!crop) {
-      throw new NotFoundException(
-        `ID ${createScheduleDto.cropId}번 작물을 찾을 수 없습니다.`,
-      );
+    const type = createScheduleDto.type || ScheduleType.CROP_DIARY;
+    let crop: Crop | null = null;
+
+    // 작물 일지인 경우 작물 ID 필수
+    if (type === ScheduleType.CROP_DIARY) {
+      if (!createScheduleDto.cropId) {
+        throw new BadRequestException(
+          '작물 일지 작성 시 작물 ID는 필수입니다.',
+        );
+      }
+      crop = await this.cropsRepository.findOne({
+        where: { id: createScheduleDto.cropId, user: { id: userId } },
+      });
+      if (!crop) {
+        throw new NotFoundException(
+          `ID ${createScheduleDto.cropId}번 작물을 찾을 수 없습니다.`,
+        );
+      }
     }
 
     const scheduleData = {
@@ -36,6 +51,8 @@ export class SchedulesService {
       content: createScheduleDto.content || null,
       date: createScheduleDto.date,
       image: imageUrl || null,
+      color: createScheduleDto.color || null,
+      type,
       user: { id: userId } as User,
       crop,
     };
@@ -170,6 +187,25 @@ export class SchedulesService {
     await this.schedulesRepository.remove(schedule);
   }
 
+  async updateColor(
+    id: number,
+    color: string,
+    userId: number,
+  ): Promise<ScheduleResponseDto> {
+    const schedule = await this.schedulesRepository.findOne({
+      where: { id, user: { id: userId } },
+    });
+
+    if (!schedule) {
+      throw new NotFoundException(`ID ${id}번 일정을 찾을 수 없습니다.`);
+    }
+
+    schedule.color = color;
+    await this.schedulesRepository.save(schedule);
+
+    return await this.findOneById(id);
+  }
+
   private transformToResponseDto(schedule: Schedule): ScheduleResponseDto {
     return {
       id: schedule.id,
@@ -180,6 +216,8 @@ export class SchedulesService {
           ? schedule.date.toISOString().split('T')[0]
           : schedule.date, // YYYY-MM-DD format
       image: schedule.image,
+      color: schedule.color,
+      type: schedule.type,
       user: {
         id: schedule.user.id,
         email: schedule.user.email,
@@ -191,27 +229,29 @@ export class SchedulesService {
         createdAt: schedule.user.createdAt,
         updatedAt: schedule.user.updatedAt,
       },
-      crop: {
-        id: schedule.crop.id,
-        name: schedule.crop.name,
-        variety: schedule.crop.variety,
-        plantingDate: schedule.crop.plantingDate,
-        expectedHarvestDate: schedule.crop.expectedHarvestDate,
-        status: schedule.crop.status,
-        description: schedule.crop.description,
-        createdAt: schedule.crop.createdAt,
-        user: {
-          id: schedule.user.id,
-          email: schedule.user.email,
-          nickname: schedule.user.nickname,
-          name: schedule.user.name,
-          interestCrops: schedule.user.interestCrops,
-          profileImage: schedule.user.profileImage,
-          userType: schedule.user.userType,
-          createdAt: schedule.user.createdAt,
-          updatedAt: schedule.user.updatedAt,
-        },
-      },
+      crop: schedule.crop
+        ? {
+            id: schedule.crop.id,
+            name: schedule.crop.name,
+            variety: schedule.crop.variety,
+            plantingDate: schedule.crop.plantingDate,
+            expectedHarvestDate: schedule.crop.expectedHarvestDate,
+            status: schedule.crop.status,
+            description: schedule.crop.description,
+            createdAt: schedule.crop.createdAt,
+            user: {
+              id: schedule.user.id,
+              email: schedule.user.email,
+              nickname: schedule.user.nickname,
+              name: schedule.user.name,
+              interestCrops: schedule.user.interestCrops,
+              profileImage: schedule.user.profileImage,
+              userType: schedule.user.userType,
+              createdAt: schedule.user.createdAt,
+              updatedAt: schedule.user.updatedAt,
+            },
+          }
+        : null,
       createdAt: schedule.createdAt,
       updatedAt: schedule.updatedAt,
     };
