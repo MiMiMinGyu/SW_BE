@@ -37,7 +37,8 @@ export class CommentsService {
 
     // 댓글 생성
     const comment = this.commentsRepository.create({
-      ...createCommentDto,
+      content: createCommentDto.content,
+      isAnonymous: createCommentDto.isAnonymous ?? false,
       post: { id: postId } as Post,
       user: { id: userId } as User,
     });
@@ -141,17 +142,30 @@ export class CommentsService {
       id: comment.id,
       content: comment.content,
       likeCount: comment.likeCount,
-      user: {
-        id: comment.user.id,
-        email: comment.user.email,
-        nickname: comment.user.nickname,
-        name: comment.user.name,
-        interestCrops: comment.user.interestCrops,
-        profileImage: comment.user.profileImage,
-        userType: comment.user.userType,
-        createdAt: comment.user.createdAt,
-        updatedAt: comment.user.updatedAt,
-      },
+      isAnonymous: comment.isAnonymous,
+      user: comment.isAnonymous
+        ? {
+            id: comment.user.id,
+            email: comment.user.email,
+            nickname: '익명',
+            name: null,
+            interestCrops: null,
+            profileImage: '/uploads/farmer_icon.png', // 기본 프로필 이미지
+            userType: comment.user.userType,
+            createdAt: comment.user.createdAt,
+            updatedAt: comment.user.updatedAt,
+          }
+        : {
+            id: comment.user.id,
+            email: comment.user.email,
+            nickname: comment.user.nickname,
+            name: comment.user.name,
+            interestCrops: comment.user.interestCrops,
+            profileImage: comment.user.profileImage,
+            userType: comment.user.userType,
+            createdAt: comment.user.createdAt,
+            updatedAt: comment.user.updatedAt,
+          },
       createdAt: comment.createdAt,
       updatedAt: comment.updatedAt,
     };

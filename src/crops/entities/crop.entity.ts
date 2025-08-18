@@ -35,6 +35,12 @@ export class Crop {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
+  @Column({ type: 'boolean', default: false, comment: '공통 캘린더용 작물 여부' })
+  isCommon: boolean;
+
+  @Column({ type: 'varchar', length: 7, default: '#4CAF50', comment: '작물 표시 색상 (HEX)' })
+  color: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

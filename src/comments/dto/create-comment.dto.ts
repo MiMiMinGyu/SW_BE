@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MinLength, MaxLength } from 'class-validator';
+import { IsString, MinLength, MaxLength, IsBoolean, IsOptional } from 'class-validator';
 
 export class CreateCommentDto {
   @ApiProperty({
@@ -10,4 +10,13 @@ export class CreateCommentDto {
   @MinLength(1, { message: '댓글 내용은 1자 이상이어야 합니다.' })
   @MaxLength(1000, { message: '댓글 내용은 1000자 이하여야 합니다.' })
   content: string;
+
+  @ApiProperty({
+    example: false,
+    description: '익명 댓글 여부 (기본값: false)',
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: '익명 여부는 불린 값이어야 합니다.' })
+  isAnonymous?: boolean;
 }

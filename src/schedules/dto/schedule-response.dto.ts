@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UserResponseDto } from '../../users/dto/user-response.dto';
 import { CropResponseDto } from '../../crops/dto/crop-response.dto';
+import { ScheduleType } from '../entities/schedule.entity';
 
 export class ScheduleResponseDto {
   @ApiProperty({
@@ -36,6 +37,20 @@ export class ScheduleResponseDto {
   image: string | null;
 
   @ApiProperty({
+    example: '#4CAF50',
+    description: '캘린더 표시 색상 (HEX 코드)',
+    nullable: true,
+  })
+  color: string | null;
+
+  @ApiProperty({
+    enum: ScheduleType,
+    example: ScheduleType.CROP_DIARY,
+    description: '일정 유형 (crop_diary: 작물 일지, personal: 개인 일정)',
+  })
+  type: ScheduleType;
+
+  @ApiProperty({
     type: UserResponseDto,
     description: '일정 소유자 정보',
   })
@@ -43,9 +58,10 @@ export class ScheduleResponseDto {
 
   @ApiProperty({
     type: CropResponseDto,
-    description: '관련 작물 정보',
+    description: '관련 작물 정보 (개인 일정인 경우 null)',
+    nullable: true,
   })
-  crop: CropResponseDto;
+  crop: CropResponseDto | null;
 
   @ApiProperty({
     example: '2025-08-12T09:30:00.000Z',

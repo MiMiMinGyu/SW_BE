@@ -22,6 +22,9 @@ export class Comment {
   @Column({ default: 0 })
   likeCount: number;
 
+  @Column({ default: false })
+  isAnonymous: boolean;
+
   @ManyToOne(() => User, (user) => user.comments, { onDelete: 'CASCADE' })
   user: User;
 
