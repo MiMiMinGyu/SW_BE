@@ -371,6 +371,12 @@ export class PostsService {
       viewCount: post.viewCount,
       likeCount: post.likeCount,
       commentCount: post.commentCount,
+      price: post.price ?? undefined,
+      maxParticipants: post.maxParticipants ?? undefined,
+      currentParticipants: post.currentParticipants,
+      scheduledDate: post.scheduledDate ?? undefined,
+      location: post.location ?? undefined,
+      isActive: post.isActive,
       user: {
         id: post.user.id,
         email: post.user.email,

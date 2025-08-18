@@ -11,6 +11,7 @@ import { Post } from '../posts/entities/post.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationStatusDto } from './dto/update-reservation-status.dto';
+import { ReservationResponseDto } from './dto/reservation-response.dto';
 import { ReservationStatus } from './enums/reservation-status.enum';
 import { PostCategory } from '../posts/enums/post-category.enum';
 
@@ -27,7 +28,7 @@ export class ReservationsService {
     postId: number,
     userId: number,
     createReservationDto: CreateReservationDto,
-  ): Promise<Reservation> {
+  ): Promise<ReservationResponseDto> {
     const post = await this.postRepository.findOne({
       where: { id: postId },
       relations: ['user'],
@@ -78,30 +79,50 @@ export class ReservationsService {
       status: ReservationStatus.PENDING,
     });
 
-    return await this.reservationRepository.save(reservation);
+    const savedReservation = await this.reservationRepository.save(reservation);
+
+    // 관계 데이터를 포함하여 다시 조회
+    const reservationWithRelations = await this.reservationRepository.findOne({
+      where: { id: savedReservation.id },
+      relations: ['user', 'post', 'post.user'],
+    });
+
+    if (!reservationWithRelations) {
+      throw new NotFoundException('예약 정보를 찾을 수 없습니다.');
+    }
+
+    return this.transformToResponseDto(reservationWithRelations);
   }
 
-  async findMyReservations(userId: number): Promise<Reservation[]> {
-    return await this.reservationRepository.find({
+  async findMyReservations(userId: number): Promise<ReservationResponseDto[]> {
+    const reservations = await this.reservationRepository.find({
       where: { user: { id: userId } },
-      relations: ['post', 'post.user'],
+      relations: ['user', 'post', 'post.user'],
       order: { createdAt: 'DESC' },
     });
+    return reservations.map((reservation) =>
+      this.transformToResponseDto(reservation),
+    );
   }
 
-  async findReceivedReservations(userId: number): Promise<Reservation[]> {
-    return await this.reservationRepository.find({
+  async findReceivedReservations(
+    userId: number,
+  ): Promise<ReservationResponseDto[]> {
+    const reservations = await this.reservationRepository.find({
       where: { post: { user: { id: userId } } },
       relations: ['user', 'post'],
       order: { createdAt: 'DESC' },
     });
+    return reservations.map((reservation) =>
+      this.transformToResponseDto(reservation),
+    );
   }
 
   async updateStatus(
     reservationId: number,
     userId: number,
     updateReservationStatusDto: UpdateReservationStatusDto,
-  ): Promise<Reservation> {
+  ): Promise<ReservationResponseDto> {
     const reservation = await this.reservationRepository.findOne({
       where: { id: reservationId },
       relations: ['post', 'post.user', 'user'],
@@ -144,17 +165,112 @@ export class ReservationsService {
       reservation.cancelReason = updateReservationStatusDto.cancelReason;
     }
 
-    return await this.reservationRepository.save(reservation);
+    const savedReservation = await this.reservationRepository.save(reservation);
+    return this.transformToResponseDto(savedReservation);
+  }
+
+  async findOne(
+    reservationId: number,
+    userId: number,
+  ): Promise<ReservationResponseDto> {
+    const reservation = await this.reservationRepository.findOne({
+      where: { id: reservationId },
+      relations: ['user', 'post', 'post.user'],
+    });
+
+    if (!reservation) {
+      throw new NotFoundException('예약을 찾을 수 없습니다.');
+    }
+
+    if (reservation.user.id !== userId && reservation.post.user.id !== userId) {
+      throw new ForbiddenException('권한이 없습니다.');
+    }
+
+    return this.transformToResponseDto(reservation);
+  }
+
+  async findAll(userType?: string): Promise<ReservationResponseDto[]> {
+    // 관리자 권한 확인 (향후 ADMIN enum 추가 시 수정 필요)
+    if (userType !== 'ADMIN') {
+      throw new ForbiddenException('관리자 권한이 필요합니다.');
+    }
+
+    const reservations = await this.reservationRepository.find({
+      relations: ['user', 'post', 'post.user'],
+      order: { createdAt: 'DESC' },
+    });
+    return reservations.map((reservation) =>
+      this.transformToResponseDto(reservation),
+    );
   }
 
   async cancel(
     reservationId: number,
     userId: number,
     cancelReason?: string,
-  ): Promise<Reservation> {
+  ): Promise<ReservationResponseDto> {
     return await this.updateStatus(reservationId, userId, {
       status: ReservationStatus.CANCELLED,
       cancelReason,
     });
+  }
+
+  private transformToResponseDto(
+    reservation: Reservation,
+  ): ReservationResponseDto {
+    return {
+      id: reservation.id,
+      participantCount: reservation.participantCount,
+      status: reservation.status,
+      message: reservation.message,
+      cancelReason: reservation.cancelReason,
+      user: {
+        id: reservation.user.id,
+        email: reservation.user.email,
+        nickname: reservation.user.nickname,
+        name: reservation.user.name,
+        interestCrops: reservation.user.interestCrops,
+        profileImage: reservation.user.profileImage,
+        userType: reservation.user.userType,
+        createdAt: reservation.user.createdAt,
+        updatedAt: reservation.user.updatedAt,
+      },
+      post: {
+        id: reservation.post.id,
+        title: reservation.post.title,
+        content: reservation.post.content,
+        category: reservation.post.category,
+        images: reservation.post.images
+          ? (JSON.parse(reservation.post.images) as string[])
+          : [],
+        viewCount: reservation.post.viewCount,
+        likeCount: reservation.post.likeCount,
+        commentCount: reservation.post.commentCount,
+        price: reservation.post.price ?? undefined,
+        maxParticipants: reservation.post.maxParticipants ?? undefined,
+        currentParticipants: reservation.post.currentParticipants,
+        scheduledDate: reservation.post.scheduledDate ?? undefined,
+        location: reservation.post.location ?? undefined,
+        isActive: reservation.post.isActive,
+        user: reservation.post.user
+          ? {
+              id: reservation.post.user.id,
+              email: reservation.post.user.email,
+              nickname: reservation.post.user.nickname,
+              name: reservation.post.user.name,
+              interestCrops: reservation.post.user.interestCrops,
+              profileImage: reservation.post.user.profileImage,
+              userType: reservation.post.user.userType,
+              createdAt: reservation.post.user.createdAt,
+              updatedAt: reservation.post.user.updatedAt,
+            }
+          : null,
+        tags: [], // 태그 정보가 필요하다면 relations에 추가 필요
+        createdAt: reservation.post.createdAt,
+        updatedAt: reservation.post.updatedAt,
+      },
+      createdAt: reservation.createdAt,
+      updatedAt: reservation.updatedAt,
+    };
   }
 }

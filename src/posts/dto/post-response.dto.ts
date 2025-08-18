@@ -52,8 +52,9 @@ export class PostResponseDto {
   @ApiProperty({
     type: UserResponseDto,
     description: '게시글 작성자 정보',
+    nullable: true,
   })
-  user: UserResponseDto;
+  user: UserResponseDto | null;
 
   @ApiProperty({
     type: [TagResponseDto],
@@ -69,6 +70,46 @@ export class PostResponseDto {
 
   @ApiProperty({ example: false, description: '현재 사용자의 좋아요 여부' })
   isLiked?: boolean;
+
+  @ApiProperty({
+    example: 50000,
+    description: '가격 (예약글인 경우)',
+    required: false,
+  })
+  price?: number;
+
+  @ApiProperty({
+    example: 20,
+    description: '최대 참가자 수 (예약글인 경우)',
+    required: false,
+  })
+  maxParticipants?: number;
+
+  @ApiProperty({
+    example: 5,
+    description: '현재 참가자 수 (예약글인 경우)',
+  })
+  currentParticipants: number;
+
+  @ApiProperty({
+    example: '2025-08-25T19:00:00.000Z',
+    description: '예정 일시 (예약글인 경우)',
+    required: false,
+  })
+  scheduledDate?: Date;
+
+  @ApiProperty({
+    example: '경기도 화성시 농장로 123',
+    description: '장소 (예약글인 경우)',
+    required: false,
+  })
+  location?: string;
+
+  @ApiProperty({
+    example: true,
+    description: '게시글 활성화 상태',
+  })
+  isActive: boolean;
 }
 
 export class PostListResponseDto {
