@@ -8,7 +8,10 @@ import { Repository, Between, FindOptionsWhere } from 'typeorm';
 import { Schedule, ScheduleType } from './entities/schedule.entity';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
-import { ScheduleResponseDto } from './dto/schedule-response.dto';
+import {
+  ScheduleResponseDto,
+  ScheduleCropDto,
+} from './dto/schedule-response.dto';
 import { User } from '../users/entities/user.entity';
 import { Crop } from '../crops/entities/crop.entity';
 
@@ -223,7 +226,7 @@ export class SchedulesService {
         updatedAt: schedule.user.updatedAt,
       },
       crop: schedule.crop
-        ? {
+        ? ({
             id: schedule.crop.id,
             name: schedule.crop.name,
             variety: schedule.crop.variety,
@@ -232,18 +235,7 @@ export class SchedulesService {
             status: schedule.crop.status,
             description: schedule.crop.description,
             createdAt: schedule.crop.createdAt,
-            user: {
-              id: schedule.user.id,
-              email: schedule.user.email,
-              nickname: schedule.user.nickname,
-              name: schedule.user.name,
-              interestCrops: schedule.user.interestCrops,
-              profileImage: schedule.user.profileImage,
-              userType: schedule.user.userType,
-              createdAt: schedule.user.createdAt,
-              updatedAt: schedule.user.updatedAt,
-            },
-          }
+          } as ScheduleCropDto)
         : null,
       createdAt: schedule.createdAt,
       updatedAt: schedule.updatedAt,

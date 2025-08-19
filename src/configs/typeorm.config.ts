@@ -30,7 +30,7 @@ export const createTypeOrmConfig = (
     // 환경별 설정
     synchronize: isDevelopment, // 개발환경에서만 true
     logging: isDevelopment
-      ? ['query', 'error', 'warn', 'info', 'log'] // 개발: 모든 로그
+      ? ['error', 'warn'] // 개발: 에러와 경고만 (query 로그 제거)
       : ['error', 'warn'], // 운영: 에러와 경고만
 
     // 운영환경 SSL 설정
@@ -91,7 +91,7 @@ export const createDirectTypeOrmConfig = (): TypeOrmModuleOptions => {
     database: process.env.DB_DATABASE,
     entities: [User, Crop, Schedule],
     synchronize: isDevelopment,
-    logging: isDevelopment ? true : ['error', 'warn'],
+    logging: isDevelopment ? ['error', 'warn'] : ['error', 'warn'],
     ssl: nodeEnv === 'production' ? { rejectUnauthorized: false } : false,
   };
 };

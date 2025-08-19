@@ -44,6 +44,9 @@ export class Crop {
   @CreateDateColumn()
   createdAt: Date;
 
-  @ManyToOne(() => User, (user) => user.crops, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.crops, { 
+    onDelete: 'CASCADE',
+    eager: false 
+  })
   user: User;
 }
