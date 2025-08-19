@@ -10,7 +10,7 @@ export interface DiseaseSearchResponse {
   sickNameEng: string;
   thumbImg: string;
   oriImg: string;
-  sickKey: number;
+  sickKey: string;
 }
 
 // 병 상세정보 API 응답
@@ -51,7 +51,7 @@ export interface PestSearchResponse {
   speciesName: string;
   thumbImg: string;
   oriImg: string;
-  insectKey: number;
+  insectKey: string;
 }
 
 // 해충 상세정보 API 응답
@@ -102,7 +102,7 @@ export interface NCPMSRequest {
 
 // 정제된 병해충 정보 응답
 export interface ProcessedDiseaseInfo {
-  id: number;
+  id: string;
   cropName: string;
   diseaseName: string;
   symptoms: string;
@@ -117,7 +117,7 @@ export interface ProcessedDiseaseInfo {
 }
 
 export interface ProcessedPestInfo {
-  id: number;
+  id: string;
   cropName: string;
   pestName: string;
   scientificName: string;
