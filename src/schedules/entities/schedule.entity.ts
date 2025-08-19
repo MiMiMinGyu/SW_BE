@@ -45,7 +45,7 @@ export class Schedule {
     type: 'enum',
     enum: ScheduleType,
     default: ScheduleType.CROP_DIARY,
-    comment: '일정 유형 (작물 일지 또는 개인 일정)',
+    comment: '일정 유형 (현재는 작물 일지만 사용)',
   })
   type: ScheduleType;
 
