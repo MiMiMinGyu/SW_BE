@@ -19,6 +19,7 @@ import { multerConfigFactory } from './common/config/multer.config';
 import { validateConfig } from './common/config/config.validation';
 import { createTypeOrmConfig } from './configs/typeorm.config';
 import { NcpmsModule } from './ncpms/ncpms.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { NcpmsModule } from './ncpms/ncpms.module';
     ReservationsModule,
     AuthModule,
     NcpmsModule,
+    AiModule,
   ],
 })
 export class AppModule {}
