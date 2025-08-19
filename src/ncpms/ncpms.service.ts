@@ -19,14 +19,10 @@ import { DiseaseSearchDto, PestSearchDto } from './dto/disease-search.dto';
 export class NcpmsService {
   private readonly logger = new Logger(NcpmsService.name);
   private readonly baseUrl = 'http://ncpms.rda.go.kr/npmsAPI/service';
-  // ✅ (보안 권장) API 키는 .env 파일로 옮겨서 ConfigService로 관리하는 것이 안전합니다.
   private readonly apiKey = '2025967c55b0456bce9c0ddeea487f12cae9';
 
   constructor(private readonly configService: ConfigService) {}
 
-  /**
-   * 병 검색 API 호출
-   */
   async searchDiseases(
     searchDto: DiseaseSearchDto,
   ): Promise<ProcessedDiseaseInfo[]> {
@@ -67,9 +63,6 @@ export class NcpmsService {
     }
   }
 
-  /**
-   * 병 상세정보 API 호출
-   */
   async getDiseaseDetail(
     sickKey: string,
   ): Promise<DiseaseDetailResponse | null> {
@@ -85,14 +78,13 @@ export class NcpmsService {
 
       return response.data.service;
     } catch (error) {
-      this.logger.error(`병 상세정보 API 호출 실패 (ID: ${sickKey}): ${error.message}`);
+      this.logger.error(
+        `병 상세정보 API 호출 실패 (ID: ${sickKey}): ${error.message}`,
+      );
       return null;
     }
   }
 
-  /**
-   * 해충 검색 API 호출
-   */
   async searchPests(searchDto: PestSearchDto): Promise<ProcessedPestInfo[]> {
     try {
       const params = {
@@ -130,9 +122,7 @@ export class NcpmsService {
     }
   }
 
-  /**
-   * 해충 상세정보 API 호출
-   */
+
   async getPestDetail(
     insectKey: string,
   ): Promise<PestDetailResponse | null> {
@@ -148,14 +138,13 @@ export class NcpmsService {
 
       return response.data.service;
     } catch (error) {
-      this.logger.error(`해충 상세정보 API 호출 실패 (ID: ${insectKey}): ${error.message}`);
+      this.logger.error(
+        `해충 상세정보 API 호출 실패 (ID: ${insectKey}): ${error.message}`,
+      );
       return null;
     }
   }
 
-  /**
-   * 작물별 병해충 종합 정보 조회
-   */
   async getCropHealthInfo(cropName: string): Promise<{
     diseases: ProcessedDiseaseInfo[];
     pests: ProcessedPestInfo[];
@@ -175,6 +164,45 @@ export class NcpmsService {
       throw new InternalServerErrorException(
         '작물 병해충 정보 조회 중 오류가 발생했습니다.',
       );
+    }
+  }
+  //더 알아보기(정보 가져오기)
+  async getRelatedDiseases(
+    cropName: string,
+    diseaseName: string,
+  ): Promise<
+    {
+      id: string;
+      name: string;
+      imageUrl: string | null;
+      summary: string;
+      tips: string[];
+    }[]
+  > {
+    try {
+      const diseases = await this.searchDiseases({
+        cropName,
+        diseaseName,
+        displayCount: 3,
+      });
+
+      return diseases.slice(0, 3).map((d) => ({
+        id: d.id,
+        name: d.diseaseName,
+        imageUrl: d.images?.[0]?.url ?? null,
+        summary: d.symptoms,
+        tips: d.preventionMethod
+          ? d.preventionMethod
+              .split(/<br\/?>/g)
+              .map((t) => t.replace(/^- /, '').trim())
+              .filter(Boolean)
+          : [],
+      }));
+    } catch (error) {
+      this.logger.error(
+        `연관 질병 조회 실패: ${cropName}/${diseaseName}, ${error.message}`,
+      );
+      throw new InternalServerErrorException('연관 질병 조회 중 오류 발생');
     }
   }
 
