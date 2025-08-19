@@ -4,17 +4,15 @@ import {
   IsOptional,
   IsDateString,
   IsNumber,
-  IsEnum,
   MaxLength,
   MinLength,
   Matches,
 } from 'class-validator';
-import { ScheduleType } from '../entities/schedule.entity';
 
 export class CreateScheduleDto {
   @ApiProperty({
     example: '토마토 씨앗 파종',
-    description: '일지 제목 (1~200자)',
+    description: '작물일지 제목 (1~200자)',
   })
   @IsString({ message: '제목은 문자열이어야 합니다.' })
   @MinLength(1, { message: '제목은 1자 이상이어야 합니다.' })
@@ -24,7 +22,7 @@ export class CreateScheduleDto {
   @ApiProperty({
     example:
       '오늘은 토마토 씨앗을 심는 날입니다. 물을 충분히 주고 햇빛이 잘 드는 곳에 배치했습니다.',
-    description: '일지 내용 (선택사항)',
+    description: '작물일지 내용 (선택사항)',
     required: false,
   })
   @IsString({ message: '내용은 문자열이어야 합니다.' })
@@ -34,7 +32,7 @@ export class CreateScheduleDto {
 
   @ApiProperty({
     example: '2025-08-15',
-    description: '일지 작성 날짜 (YYYY-MM-DD 형식)',
+    description: '작물일지 작성 날짜 (YYYY-MM-DD 형식)',
   })
   @IsDateString(
     {},
@@ -43,23 +41,11 @@ export class CreateScheduleDto {
   date: string;
 
   @ApiProperty({
-    enum: ScheduleType,
-    example: ScheduleType.CROP_DIARY,
-    description: '일정 유형 (crop_diary: 작물 일지, personal: 개인 일정)',
-    default: ScheduleType.CROP_DIARY,
-  })
-  @IsEnum(ScheduleType, { message: '올바른 일정 유형을 선택해주세요.' })
-  @IsOptional()
-  type?: ScheduleType;
-
-  @ApiProperty({
     example: 1,
-    description: '작물 ID (개인 일정인 경우 생략 가능)',
-    required: false,
+    description: '작물 ID (필수)',
   })
   @IsNumber({}, { message: '작물 ID는 숫자여야 합니다.' })
-  @IsOptional()
-  cropId?: number;
+  cropId: number;
 
   @ApiProperty({
     example: '#4CAF50',
@@ -76,7 +62,7 @@ export class CreateScheduleDto {
   @ApiProperty({
     type: 'string',
     format: 'binary',
-    description: '일지 이미지 파일 (선택사항)',
+    description: '작물일지 이미지 파일 (선택사항)',
     required: false,
   })
   @IsOptional()

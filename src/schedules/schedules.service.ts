@@ -26,24 +26,17 @@ export class SchedulesService {
     userId: number,
     imageUrl?: string,
   ): Promise<ScheduleResponseDto> {
-    const type = createScheduleDto.type || ScheduleType.CROP_DIARY;
-    let crop: Crop | null = null;
+    if (!createScheduleDto.cropId) {
+      throw new BadRequestException('작물 일지 작성 시 작물 ID는 필수입니다.');
+    }
 
-    // 작물 일지인 경우 작물 ID 필수
-    if (type === ScheduleType.CROP_DIARY) {
-      if (!createScheduleDto.cropId) {
-        throw new BadRequestException(
-          '작물 일지 작성 시 작물 ID는 필수입니다.',
-        );
-      }
-      crop = await this.cropsRepository.findOne({
-        where: { id: createScheduleDto.cropId, user: { id: userId } },
-      });
-      if (!crop) {
-        throw new NotFoundException(
-          `ID ${createScheduleDto.cropId}번 작물을 찾을 수 없습니다.`,
-        );
-      }
+    const crop = await this.cropsRepository.findOne({
+      where: { id: createScheduleDto.cropId, user: { id: userId } },
+    });
+    if (!crop) {
+      throw new NotFoundException(
+        `ID ${createScheduleDto.cropId}번 작물을 찾을 수 없습니다.`,
+      );
     }
 
     const scheduleData = {
@@ -52,7 +45,7 @@ export class SchedulesService {
       date: createScheduleDto.date,
       image: imageUrl || null,
       color: createScheduleDto.color || null,
-      type,
+      type: ScheduleType.CROP_DIARY,
       user: { id: userId } as User,
       crop,
     };
