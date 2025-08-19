@@ -232,17 +232,6 @@ export class SchedulesService {
             status: schedule.crop.status,
             description: schedule.crop.description,
             createdAt: schedule.crop.createdAt,
-            user: {
-              id: schedule.user.id,
-              email: schedule.user.email,
-              nickname: schedule.user.nickname,
-              name: schedule.user.name,
-              interestCrops: schedule.user.interestCrops,
-              profileImage: schedule.user.profileImage,
-              userType: schedule.user.userType,
-              createdAt: schedule.user.createdAt,
-              updatedAt: schedule.user.updatedAt,
-            },
           }
         : null,
       createdAt: schedule.createdAt,
