@@ -32,7 +32,7 @@ export class Post {
     type: 'enum',
     enum: PostCategory,
     default: PostCategory.GENERAL,
-    comment: '게시글 카테고리: 전체, 질문, 일지, 노하우',
+    comment: '게시글 카테고리: 전체, 질문, 일지, 노하우, 예약, 자유게시판, 건의게시판',
   })
   category: PostCategory;
 
