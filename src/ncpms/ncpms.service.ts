@@ -23,9 +23,6 @@ export class NcpmsService {
 
   constructor(private readonly configService: ConfigService) {}
 
-  /**
-   * 병 검색 API 호출
-   */
   async searchDiseases(
     searchDto: DiseaseSearchDto,
   ): Promise<ProcessedDiseaseInfo[]> {
@@ -42,43 +39,33 @@ export class NcpmsService {
 
       this.logger.log(`병 검색 API 호출: ${JSON.stringify(params)}`);
 
-      const response: AxiosResponse<{ list: DiseaseSearchResponse[] }> =
-        await axios.get(this.baseUrl, { params });
+      const response: AxiosResponse<{
+        service: { list: DiseaseSearchResponse[] };
+      }> = await axios.get(this.baseUrl, { params });
 
-      if (!response.data?.list) {
+      if (!response.data?.service?.list) {
         return [];
       }
 
-      // 병 상세 정보를 각각 조회하여 통합 정보 생성
       const detailedDiseases = await Promise.all(
-        response.data.list.map(async (disease) => {
-          try {
-            const detail = await this.getDiseaseDetail(disease.sickKey);
-            return this.processDiseaseData(disease, detail);
-          } catch (error) {
-            this.logger.warn(
-              `병 상세정보 조회 실패 (ID: ${disease.sickKey}): ${error instanceof Error ? error.message : String(error)}`,
-            );
-            return this.processDiseaseData(disease, undefined);
-          }
+        response.data.service.list.map(async (disease) => {
+          const detail = await this.getDiseaseDetail(disease.sickKey);
+          return this.processDiseaseData(disease, detail || undefined);
         }),
       );
 
       return detailedDiseases;
     } catch (error) {
-      this.logger.error(
-        `병 검색 API 호출 실패: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      this.logger.error(`병 검색 API 호출 실패: ${error.message}`);
       throw new InternalServerErrorException(
         '병해충 정보 조회 중 오류가 발생했습니다.',
       );
     }
   }
 
-  /**
-   * 병 상세정보 API 호출
-   */
-  async getDiseaseDetail(sickKey: number): Promise<DiseaseDetailResponse> {
+  async getDiseaseDetail(
+    sickKey: string,
+  ): Promise<DiseaseDetailResponse | null> {
     try {
       const params = {
         apiKey: this.apiKey,
@@ -86,23 +73,18 @@ export class NcpmsService {
         sickKey: sickKey,
       };
 
-      const response: AxiosResponse<DiseaseDetailResponse> = await axios.get(
-        this.baseUrl,
-        { params },
-      );
+      const response: AxiosResponse<{ service: DiseaseDetailResponse }> =
+        await axios.get(this.baseUrl, { params });
 
-      return response.data;
+      return response.data.service;
     } catch (error) {
       this.logger.error(
-        `병 상세정보 API 호출 실패 (ID: ${sickKey}): ${error instanceof Error ? error.message : String(error)}`,
+        `병 상세정보 API 호출 실패 (ID: ${sickKey}): ${error.message}`,
       );
-      throw error;
+      return null;
     }
   }
 
-  /**
-   * 해충 검색 API 호출
-   */
   async searchPests(searchDto: PestSearchDto): Promise<ProcessedPestInfo[]> {
     try {
       const params = {
@@ -117,43 +99,33 @@ export class NcpmsService {
 
       this.logger.log(`해충 검색 API 호출: ${JSON.stringify(params)}`);
 
-      const response: AxiosResponse<{ list: PestSearchResponse[] }> =
+      const response: AxiosResponse<{ service: { list: PestSearchResponse[] } }> =
         await axios.get(this.baseUrl, { params });
 
-      if (!response.data?.list) {
+      if (!response.data?.service?.list) {
         return [];
       }
 
-      // 해충 상세 정보를 각각 조회하여 통합 정보 생성
       const detailedPests = await Promise.all(
-        response.data.list.map(async (pest) => {
-          try {
-            const detail = await this.getPestDetail(pest.insectKey);
-            return this.processPestData(pest, detail);
-          } catch (error) {
-            this.logger.warn(
-              `해충 상세정보 조회 실패 (ID: ${pest.insectKey}): ${error instanceof Error ? error.message : String(error)}`,
-            );
-            return this.processPestData(pest, undefined);
-          }
+        response.data.service.list.map(async (pest) => {
+          const detail = await this.getPestDetail(pest.insectKey);
+          return this.processPestData(pest, detail || undefined);
         }),
       );
 
       return detailedPests;
     } catch (error) {
-      this.logger.error(
-        `해충 검색 API 호출 실패: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      this.logger.error(`해충 검색 API 호출 실패: ${error.message}`);
       throw new InternalServerErrorException(
         '해충 정보 조회 중 오류가 발생했습니다.',
       );
     }
   }
 
-  /**
-   * 해충 상세정보 API 호출
-   */
-  async getPestDetail(insectKey: number): Promise<PestDetailResponse> {
+
+  async getPestDetail(
+    insectKey: string,
+  ): Promise<PestDetailResponse | null> {
     try {
       const params = {
         apiKey: this.apiKey,
@@ -161,23 +133,18 @@ export class NcpmsService {
         insectKey: insectKey,
       };
 
-      const response: AxiosResponse<PestDetailResponse> = await axios.get(
-        this.baseUrl,
-        { params },
-      );
+      const response: AxiosResponse<{ service: PestDetailResponse }> =
+        await axios.get(this.baseUrl, { params });
 
-      return response.data;
+      return response.data.service;
     } catch (error) {
       this.logger.error(
-        `해충 상세정보 API 호출 실패 (ID: ${insectKey}): ${error instanceof Error ? error.message : String(error)}`,
+        `해충 상세정보 API 호출 실패 (ID: ${insectKey}): ${error.message}`,
       );
-      throw error;
+      return null;
     }
   }
 
-  /**
-   * 작물별 병해충 종합 정보 조회
-   */
   async getCropHealthInfo(cropName: string): Promise<{
     diseases: ProcessedDiseaseInfo[];
     pests: ProcessedPestInfo[];
@@ -189,16 +156,53 @@ export class NcpmsService {
       ]);
 
       return {
-        diseases: diseases.slice(0, 10), // 상위 10개만 반환
-        pests: pests.slice(0, 10), // 상위 10개만 반환
+        diseases: diseases.slice(0, 10),
+        pests: pests.slice(0, 10),
       };
     } catch (error) {
-      this.logger.error(
-        `작물 종합 정보 조회 실패: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      this.logger.error(`작물 종합 정보 조회 실패: ${error.message}`);
       throw new InternalServerErrorException(
         '작물 병해충 정보 조회 중 오류가 발생했습니다.',
       );
+    }
+  }
+  //더 알아보기(정보 가져오기)
+  async getRelatedDiseases(
+    cropName: string,
+    diseaseName: string,
+  ): Promise<
+    {
+      id: string;
+      name: string;
+      imageUrl: string | null;
+      summary: string;
+      tips: string[];
+    }[]
+  > {
+    try {
+      const diseases = await this.searchDiseases({
+        cropName,
+        diseaseName,
+        displayCount: 3,
+      });
+
+      return diseases.slice(0, 3).map((d) => ({
+        id: d.id,
+        name: d.diseaseName,
+        imageUrl: d.images?.[0]?.url ?? null,
+        summary: d.symptoms,
+        tips: d.preventionMethod
+          ? d.preventionMethod
+              .split(/<br\/?>/g)
+              .map((t) => t.replace(/^- /, '').trim())
+              .filter(Boolean)
+          : [],
+      }));
+    } catch (error) {
+      this.logger.error(
+        `연관 질병 조회 실패: ${cropName}/${diseaseName}, ${error.message}`,
+      );
+      throw new InternalServerErrorException('연관 질병 조회 중 오류 발생');
     }
   }
 
@@ -219,7 +223,7 @@ export class NcpmsService {
       chemicalPrevention: detail?.chemicalPrvnbeMth || '정보 없음',
       developmentCondition: detail?.developmentCondition || '정보 없음',
       images: [
-        ...(disease.thumbImg
+        ...(disease.thumbImg && !disease.thumbImg.endsWith('noImg.gif')
           ? [{ url: disease.thumbImg, title: '대표 이미지' }]
           : []),
         ...(detail?.imageList?.map((img) => ({
@@ -253,7 +257,7 @@ export class NcpmsService {
       ecologyInfo: detail?.ecologyInfo || '정보 없음',
       enemyInsects: detail?.enemyInsectSpeciesKor || [],
       images: [
-        ...(pest.thumbImg
+        ...(pest.thumbImg && !pest.thumbImg.endsWith('noImg.gif')
           ? [{ url: pest.thumbImg, title: '대표 이미지' }]
           : []),
         ...(detail?.imageList?.map((img) => ({
