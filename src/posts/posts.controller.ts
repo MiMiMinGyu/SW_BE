@@ -85,21 +85,23 @@ export class PostsController {
 
 📋 주요 기능:
 • 텍스트 검색: 제목/내용에서 키워드 검색
-• 카테고리 필터: 일반글/질문/일지/노하우/예약글 분류
+• 카테고리 필터: 일반글/질문/일지/노하우/예약글/자유게시판/건의게시판 분류
 • 태그 검색: 관련 태그로 필터링
 • 정렬: 최신순/인기순/조회순
+• 권한 제어: 건의게시판은 관리자만 접근 가능
 
 🔍 검색 예시:
 • ?search=토마토 (제목/내용에 "토마토" 포함)
 • ?category=reservation&search=체험 (예약글 중 "체험" 검색)
-• ?tags=배추,병해충 (배추, 병해충 태그)`,
+• ?tags=배추,병해충 (배추, 병해충 태그)
+• ?category=suggestion (건의게시판 - 관리자 전용)`,
   })
   @ApiQuery({
     name: 'category',
     required: false,
     enum: PostCategory,
-    description: '카테고리 필터 (전체/질문/일지/노하우/예약)',
-    example: 'reservation',
+    description: '카테고리 필터 (전체/질문/일지/노하우/예약/자유게시판/건의게시판)',
+    example: 'free',
   })
   @ApiQuery({
     name: 'search',
@@ -144,7 +146,7 @@ export class PostsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('sortBy') sortBy?: 'latest' | 'popular' | 'views',
-    @GetUser('id') userId?: number,
+    @GetUser() user?: any,
   ): Promise<PostListResponseDto> {
     const options: PostQueryOptions = {
       category,
@@ -153,7 +155,8 @@ export class PostsController {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
       sortBy: sortBy || 'latest',
-      userId,
+      userId: user?.id,
+      userType: user?.userType,
     };
 
     return this.postsService.findAll(options);
@@ -177,9 +180,9 @@ export class PostsController {
   @ApiResponse({ status: 404, description: '게시글을 찾을 수 없음' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-    @GetUser('id') userId?: number,
+    @GetUser() user?: any,
   ): Promise<PostResponseDto> {
-    return this.postsService.findOneById(id, userId);
+    return this.postsService.findOneById(id, user?.id, user?.userType);
   }
 
   @Patch(':id')

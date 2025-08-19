@@ -25,6 +25,7 @@ export interface PostQueryOptions {
   limit?: number;
   sortBy?: 'latest' | 'popular' | 'views';
   userId?: number; // 좋아요 여부 확인용
+  userType?: UserType; // 권한 체크용
 }
 
 @Injectable()
@@ -143,7 +144,7 @@ export class PostsService {
     };
   }
 
-  async findOneById(id: number, userId?: number): Promise<PostResponseDto> {
+  async findOneById(id: number, userId?: number, userType?: UserType): Promise<PostResponseDto> {
     const post = await this.postsRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.user', 'user')
@@ -154,6 +155,11 @@ export class PostsService {
 
     if (!post) {
       throw new NotFoundException(`ID ${id}번 게시글을 찾을 수 없습니다.`);
+    }
+
+    // 건의게시판 권한 체크
+    if (post.category === PostCategory.SUGGESTION && userType !== UserType.ADMIN) {
+      throw new ForbiddenException('건의게시판은 관리자만 접근할 수 있습니다.');
     }
 
     // 조회수 증가
@@ -289,7 +295,21 @@ export class PostsService {
     query: SelectQueryBuilder<Post>,
     options: PostQueryOptions,
   ): SelectQueryBuilder<Post> {
-    const { category, search, tags } = options;
+    const { category, search, tags, userType } = options;
+
+    // 건의게시판 권한 체크
+    if (category === PostCategory.SUGGESTION) {
+      if (userType !== UserType.ADMIN) {
+        throw new ForbiddenException('건의게시판은 관리자만 접근할 수 있습니다.');
+      }
+    }
+
+    // 건의게시판을 일반 사용자에게서 숨김 (카테고리가 명시되지 않은 경우)
+    if (!category && userType !== UserType.ADMIN) {
+      query = query.andWhere('post.category != :suggestion', { 
+        suggestion: PostCategory.SUGGESTION 
+      });
+    }
 
     if (category) {
       query = query.andWhere('post.category = :category', { category });
