@@ -1,7 +1,21 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import fetch from 'node-fetch';
+// Using Node.js 18+ native fetch
 import { DiseaseInfo } from './interfaces/disease-info.interface';
+
+interface GeminiCandidate {
+  content: {
+    parts: Array<{ text: string }>;
+  };
+}
+
+interface GeminiResponse {
+  candidates: GeminiCandidate[];
+}
 
 @Injectable()
 export class AiService {
@@ -27,15 +41,15 @@ export class AiService {
         properties: {
           diseaseName: { type: 'STRING' },
           description: { type: 'STRING' },
-          solution:    { type: 'STRING' },
+          solution: { type: 'STRING' },
         },
         required: ['diseaseName', 'description', 'solution'],
       },
     };
 
     const prompt = `
-      당신은 식물 질병 진단 전문가입니다. 
-      사용자가 입력한 작물과 증상을 바탕으로, 가능성이 있는 질병 3가지를 추천해주세요. 
+      당신은 식물 질병 진단 전문가입니다.
+      사용자가 입력한 작물과 증상을 바탕으로, 가능성이 있는 질병 3가지를 추천해주세요.
       각 질병에 대해 이름(diseaseName)과 간단한 설명(description), 그리고 해결방법(solution)을 포함하여 JSON 형식으로 응답해야 합니다.
       사용자 입력: "${userPrompt}"
     `;
@@ -58,19 +72,23 @@ export class AiService {
 
       if (!response.ok) {
         const errorBody = await response.text();
-        this.logger.error(`Gemini API 에러: ${response.statusText}, ${errorBody}`);
+        this.logger.error(
+          `Gemini API 에러: ${response.statusText}, ${errorBody}`,
+        );
         throw new InternalServerErrorException('AI 모델 응답에 실패했습니다.');
       }
 
-      const data = (await response.json()) as any;
+      const data = (await response.json()) as GeminiResponse;
       const jsonText = data.candidates[0].content.parts[0].text;
       const result = JSON.parse(jsonText) as DiseaseInfo[];
-      
+
       this.logger.log('Gemini API로부터 성공적으로 응답을 받았습니다.');
       return result;
-
-    } catch (error) {
-      this.logger.error('Gemini 호출 중 예외 발생', error.stack);
+    } catch (error: unknown) {
+      this.logger.error(
+        'Gemini 호출 중 예외 발생',
+        error instanceof Error ? error.stack : String(error),
+      );
       throw new InternalServerErrorException('AI 진단 중 오류가 발생했습니다.');
     }
   }

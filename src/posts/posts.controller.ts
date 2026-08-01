@@ -25,6 +25,13 @@ import { CreateReservationPostDto } from './dto/create-reservation-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostResponseDto, PostListResponseDto } from './dto/post-response.dto';
 import { GetUser } from '../common/decorators/get-user.decorator';
+import { UserType } from '../users/enums/user-type.enum';
+
+interface UserPayload {
+  id: number;
+  email: string;
+  userType: UserType;
+}
 import { PostCategory } from './enums/post-category.enum';
 
 @ApiTags('3. Post - 게시글 관리')
@@ -100,7 +107,8 @@ export class PostsController {
     name: 'category',
     required: false,
     enum: PostCategory,
-    description: '카테고리 필터 (전체/질문/일지/노하우/예약/자유게시판/건의게시판)',
+    description:
+      '카테고리 필터 (전체/질문/일지/노하우/예약/자유게시판/건의게시판)',
     example: 'free',
   })
   @ApiQuery({
@@ -146,7 +154,7 @@ export class PostsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('sortBy') sortBy?: 'latest' | 'popular' | 'views',
-    @GetUser() user?: any,
+    @GetUser() user?: UserPayload,
   ): Promise<PostListResponseDto> {
     const options: PostQueryOptions = {
       category,
@@ -155,8 +163,8 @@ export class PostsController {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
       sortBy: sortBy || 'latest',
-      userId: user?.id,
-      userType: user?.userType,
+      userId: user ? user.id : undefined,
+      userType: user ? user.userType : undefined,
     };
 
     return this.postsService.findAll(options);
@@ -180,9 +188,13 @@ export class PostsController {
   @ApiResponse({ status: 404, description: '게시글을 찾을 수 없음' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-    @GetUser() user?: any,
+    @GetUser() user?: UserPayload,
   ): Promise<PostResponseDto> {
-    return this.postsService.findOneById(id, user?.id, user?.userType);
+    return this.postsService.findOneById(
+      id,
+      user ? user.id : undefined,
+      user ? user.userType : undefined,
+    );
   }
 
   @Patch(':id')

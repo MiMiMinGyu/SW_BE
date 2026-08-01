@@ -9,7 +9,7 @@ import {
 
 enum Environment {
   Development = 'development',
-  Production = 'production',
+  Production = 'prodㅉuction',
   Test = 'test',
 }
 

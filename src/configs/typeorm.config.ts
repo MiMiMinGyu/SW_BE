@@ -4,6 +4,12 @@ import { ConfigService } from '@nestjs/config';
 import { User } from '../users/entities/user.entity';
 import { Crop } from '../crops/entities/crop.entity';
 import { Schedule } from '../schedules/entities/schedule.entity';
+import { Post } from '../posts/entities/post.entity';
+import { PostLike } from '../posts/entities/post-like.entity';
+import { PostTag } from '../posts/entities/post-tag.entity';
+import { Comment } from '../comments/entities/comment.entity';
+import { Reservation } from '../reservations/entities/reservation.entity';
+import { Tag } from '../tags/entities/tag.entity';
 
 /**
  * TypeORM 설정 팩토리 함수
@@ -25,7 +31,7 @@ export const createTypeOrmConfig = (
     database: configService.get<string>('DB_DATABASE'),
 
     // 엔티티 설정
-    entities: [User, Crop, Schedule],
+    entities: [User, Crop, Schedule, Post, PostLike, PostTag, Comment, Reservation, Tag],
 
     // 환경별 설정
     synchronize: isDevelopment, // 개발환경에서만 true
@@ -89,7 +95,7 @@ export const createDirectTypeOrmConfig = (): TypeOrmModuleOptions => {
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
-    entities: [User, Crop, Schedule],
+    entities: [User, Crop, Schedule, Post, PostLike, PostTag, Comment, Reservation, Tag],
     synchronize: isDevelopment,
     logging: isDevelopment ? ['error', 'warn'] : ['error', 'warn'],
     ssl: nodeEnv === 'production' ? { rejectUnauthorized: false } : false,

@@ -1,4 +1,10 @@
-import { Body, Controller, Post, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { AiService } from './ai.service';
 import { SymptomCheckDto } from './dto/symptom-check.dto';
 import { DiseaseInfo } from './interfaces/disease-info.interface';

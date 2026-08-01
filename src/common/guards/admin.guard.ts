@@ -6,10 +6,20 @@ import {
 } from '@nestjs/common';
 import { UserType } from '../../users/enums/user-type.enum';
 
+interface UserPayload {
+  id: number;
+  email: string;
+  userType: UserType;
+}
+
+interface AuthenticatedRequest {
+  user: UserPayload;
+}
+
 @Injectable()
 export class AdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const user = request.user;
 
     if (!user) {

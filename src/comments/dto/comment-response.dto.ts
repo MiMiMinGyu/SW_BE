@@ -21,10 +21,16 @@ export class CommentResponseDto {
   })
   user: UserResponseDto | null;
 
-  @ApiProperty({ example: '2025-08-12T10:30:00.000Z', description: '댓글 생성일' })
+  @ApiProperty({
+    example: '2025-08-12T10:30:00.000Z',
+    description: '댓글 생성일',
+  })
   createdAt: Date;
 
-  @ApiProperty({ example: '2025-08-12T10:30:00.000Z', description: '댓글 수정일' })
+  @ApiProperty({
+    example: '2025-08-12T10:30:00.000Z',
+    description: '댓글 수정일',
+  })
   updatedAt: Date;
 }
 

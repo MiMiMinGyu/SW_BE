@@ -144,7 +144,11 @@ export class PostsService {
     };
   }
 
-  async findOneById(id: number, userId?: number, userType?: UserType): Promise<PostResponseDto> {
+  async findOneById(
+    id: number,
+    userId?: number,
+    userType?: UserType,
+  ): Promise<PostResponseDto> {
     const post = await this.postsRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.user', 'user')
@@ -158,7 +162,10 @@ export class PostsService {
     }
 
     // 건의게시판 권한 체크
-    if (post.category === PostCategory.SUGGESTION && userType !== UserType.ADMIN) {
+    if (
+      post.category === PostCategory.SUGGESTION &&
+      (!userType || userType !== UserType.ADMIN)
+    ) {
       throw new ForbiddenException('건의게시판은 관리자만 접근할 수 있습니다.');
     }
 
@@ -299,15 +306,17 @@ export class PostsService {
 
     // 건의게시판 권한 체크
     if (category === PostCategory.SUGGESTION) {
-      if (userType !== UserType.ADMIN) {
-        throw new ForbiddenException('건의게시판은 관리자만 접근할 수 있습니다.');
+      if (!userType || userType !== UserType.ADMIN) {
+        throw new ForbiddenException(
+          '건의게시판은 관리자만 접근할 수 있습니다.',
+        );
       }
     }
 
     // 건의게시판을 일반 사용자에게서 숨김 (카테고리가 명시되지 않은 경우)
-    if (!category && userType !== UserType.ADMIN) {
-      query = query.andWhere('post.category != :suggestion', { 
-        suggestion: PostCategory.SUGGESTION 
+    if (!category && (!userType || userType !== UserType.ADMIN)) {
+      query = query.andWhere('post.category != :suggestion', {
+        suggestion: PostCategory.SUGGESTION,
       });
     }
 
