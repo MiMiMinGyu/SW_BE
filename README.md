@@ -1,98 +1,103 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🌱 Farmunity Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+농업 커뮤니티 웹 서비스 **Farmunity**의 백엔드 API 서버입니다. 프론트엔드와 AI 예측 서버는 [Dandelion](https://github.com/2uGod/Dandelion) 저장소에 있습니다.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+> 🏅 명지대학교 창의적 SW프로그램 경진대회 수상 (2025년 2학기)
 
-## Description
+## 주요 기능
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+| 모듈 | 경로 | 기능 |
+| --- | --- | --- |
+| auth | `/auth` | 회원가입, 로그인, 로그아웃 (JWT) |
+| users | `/users` | 내 프로필 조회·수정, 프로필 이미지 업로드 |
+| crops | `/crops` | 내 작물 등록·조회·수정·삭제 |
+| schedules | `/schedules` | 작물일지와 일정 관리, 날짜·작물별 캘린더 조회, 색상 지정 |
+| posts | `/posts` | 게시글 작성·조회·수정·삭제, 좋아요, 체험 예약 게시글 |
+| comments | `/posts/:postId/comments` | 댓글 작성·조회·수정·삭제 |
+| tags | `/tags` | 인기 태그 조회, 태그 검색 |
+| reservations | `/reservations` | 체험 예약 신청, 내 예약·받은 예약 조회, 승인과 취소 |
+| ncpms | `/ncpms` | 병·해충 정보 검색, 작물별 병해충 정보, 내 작물 기반 추천 |
+| ai | `/ai` | 증상 설명을 받아 가능성 있는 병과 대처법 안내 (Gemini) |
 
-## Project setup
+전체 API 명세는 서버 실행 후 Swagger(`/api-docs`)에서 확인할 수 있습니다.
 
-```bash
-$ npm install
+## 기술 스택
+
+| 구분 | 기술 |
+| --- | --- |
+| Framework | NestJS, TypeScript |
+| Database | PostgreSQL, TypeORM |
+| 인증 | JWT, Passport, bcrypt |
+| 검증 · 문서 | class-validator, Swagger |
+| 외부 API | Google Gemini, 국가농작물병해충관리시스템(NCPMS) |
+
+## 설계 포인트
+
+- 전역 ValidationPipe로 DTO에 정의되지 않은 값이 들어오면 요청을 거부합니다.
+- 전역 예외 필터와 응답 변환 인터셉터로 응답 형식을 통일했습니다.
+- 사용자 유형(취미 농부, 전문가)에 따라 체험 예약 게시글 작성과 예약 승인 권한을 구분합니다.
+- Gemini에는 응답 스키마를 지정해 병명, 설명, 해결 방법을 항상 같은 JSON 구조로 받습니다.
+
+## 프로젝트 구조
+
+```
+SW_BE/
+├── src/
+│   ├── auth/           # 인증
+│   ├── users/          # 사용자
+│   ├── crops/          # 작물
+│   ├── schedules/      # 작물일지, 일정
+│   ├── posts/          # 게시글
+│   ├── comments/       # 댓글
+│   ├── tags/           # 태그
+│   ├── reservations/   # 체험 예약
+│   ├── ncpms/          # 병해충 정보 연동
+│   ├── ai/             # Gemini 증상 진단
+│   ├── common/         # 예외 필터, 인터셉터
+│   └── configs/        # TypeORM 설정
+├── migrations/
+├── SETUP_GUIDE.md      # 개발 환경 설정 안내
+└── DEPLOYMENT_GUIDE.md # 배포 시 이미지 저장 방식 안내
 ```
 
-## Compile and run the project
+## 실행 방법
 
-```bash
-# development
-$ npm run start
+Node.js(LTS)와 PostgreSQL이 필요합니다. 자세한 설치 과정은 [SETUP_GUIDE.md](SETUP_GUIDE.md)를 참고하세요.
 
-# watch mode
-$ npm run start:dev
+**1. 환경 변수**
 
-# production mode
-$ npm run start:prod
+프로젝트 최상위에 `.env` 파일을 만듭니다.
+
+```env
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=비밀번호
+DB_DATABASE=smartfarming_dev
+
+# JWT
+JWT_SECRET=임의의_긴_문자열
+JWT_EXPIRES_IN=7d
+
+# Gemini (필수, 없으면 서버가 시작되지 않습니다)
+GEMINI_API_KEY=발급받은_키
+
+# Server
+NODE_ENV=development
+PORT=3000
 ```
 
-## Run tests
+**2. 데이터베이스 생성**
+
+PostgreSQL에 `smartfarming_dev` 데이터베이스를 만듭니다.
+
+**3. 실행**
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
+npm run start:dev
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- 서버: `http://localhost:3000`
+- Swagger: `http://localhost:3000/api-docs`
